@@ -4,7 +4,7 @@ patches {
     about {
         name = "Aimal Patches"
         description = "Custom Morphe patches for Crunchyroll - speed control"
-        source = "https://github.com/datguybasit/aimal-patches"
+        source = "https://github.com/hashtagbasit/aimal-patches"
         author = "Aimal"
         contact = ""
         website = ""
@@ -15,6 +15,7 @@ patches {
 kotlin {
     compilerOptions {
         freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.add("-Xcontext-receivers")
     }
 }
 
@@ -29,21 +30,8 @@ tasks {
         classpath = sourceSets["main"].runtimeClasspath
         mainClass.set("app.morphe.util.PatchListGeneratorKt")
     }
+
     publish {
         dependsOn("generatePatchesList")
-    }
-}
-
-kotlin {
-    compilerOptions {
-        freeCompilerArgs = listOf("-Xcontext-receivers")
-    }
-}        dependsOn("generatePatchesList")
-    }
-}
-
-kotlin {
-    compilerOptions {
-        freeCompilerArgs = listOf("-Xcontext-receivers")
     }
 }
