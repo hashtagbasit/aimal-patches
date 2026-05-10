@@ -58,7 +58,7 @@ jobs:
           subject-name: 'Morphe Patches ${{ steps.release.outputs.new_release_git_tag }}'
           subject-path: patches/build/libs/patches-*.mpp
 
-        - name: Upload patches
+      - name: Upload patches
         uses: actions/upload-artifact@v4
         with:
           name: aimal-patches
