@@ -1,9 +1,7 @@
 package app.aimal.patches.crunchyroll
 
-import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
-import com.android.tools.smali.dexlib2.AccessFlags
 
 @Suppress("unused")
 val addFastSpeedsPatch = bytecodePatch(
@@ -16,21 +14,14 @@ val addFastSpeedsPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        val viewModelClass = PlayerSettingsViewModelConstructorFingerprint.classDef.type
+        val method = PlayerSettingsViewModelConstructorFingerprint.method
+        val instructions = method.implementation!!.instructions.toList()
+        val lastIndex = instructions.size - 1
 
-        val speedListMethodFingerprint = Fingerprint(
-            definingClass = viewModelClass,
-            returnType = "Landroidx/lifecycle/L;",
-            accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-            parameters = listOf(),
-        )
-
-        speedListMethodFingerprint.method.addInstructions(
-            0,
+        method.addInstructions(
+            lastIndex,
             """
-                invoke-static {}, Lapp/aimal/extension/crunchyroll/SpeedHelper;->getSpeedLiveData()Landroidx/lifecycle/L;
-                move-result-object v0
-                return-object v0
+                invoke-static {p0}, Lapp/aimal/extension/crunchyroll/SpeedHelper;->replaceSpeedList(Ljava/lang/Object;)V
             """,
         )
     }
