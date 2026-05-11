@@ -6,7 +6,7 @@ import app.morphe.patcher.patch.BytecodePatchContext
 import app.morphe.patcher.patch.bytecodePatch
 import com.android.tools.smali.dexlib2.AccessFlags
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 private fun forceConfigFlag(
     toStringFingerprint: Fingerprint,
     returnValue: Boolean,
