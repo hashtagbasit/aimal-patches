@@ -4,12 +4,14 @@ import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
 import com.android.tools.smali.dexlib2.AccessFlags
+import app.morphe.patcher.patch.BytecodePatchContext
 
 /**
  * Helper: finds the isEnabled() boolean method in the same class
  * as the given toString fingerprint, and forces it to return the
  * specified value.
  */
+context(BytecodePatchContext)
 private fun forceConfigFlag(
     toStringFingerprint: Fingerprint,
     returnValue: Boolean,
