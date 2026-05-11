@@ -131,6 +131,7 @@ object PlayerViewOnAttachedFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     parameters = listOf(),
     filters = listOf(
+        string("getContext(...)"),
         string("playerControlsAnalytics"),
     ),
 )
