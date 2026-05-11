@@ -17,10 +17,10 @@ val enableSpeedControlPatch = bytecodePatch(
         val configClassName = PlaybackSpeedConfigToStringFingerprint.classDef.type
 
         val isEnabledFingerprint = Fingerprint(
-            definingClass = configClassName,
             returnType = "Z",
             accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
             parameters = listOf(),
+            custom = { _, classDef -> classDef.type == configClassName },
         )
 
         isEnabledFingerprint.method.addInstructions(
