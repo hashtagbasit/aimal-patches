@@ -11,7 +11,7 @@ import app.morphe.patcher.patch.BytecodePatchContext
  * as the given toString fingerprint, and forces it to return the
  * specified value.
  */
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 private fun forceConfigFlag(
     toStringFingerprint: Fingerprint,
     returnValue: Boolean,
