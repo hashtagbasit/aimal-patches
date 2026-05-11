@@ -42,12 +42,12 @@ public final class AspectRatioHelper {
             button.setBackground(bg);
 
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.WRAP_CONTENT,
-                    FrameLayout.LayoutParams.WRAP_CONTENT
-            );
-            params.gravity = Gravity.TOP | Gravity.START;
-            params.topMargin = dp(ctx, 52);
-            params.leftMargin = dp(ctx, 12);
+               FrameLayout.LayoutParams.WRAP_CONTENT,
+               FrameLayout.LayoutParams.WRAP_CONTENT
+);
+params.gravity = Gravity.BOTTOM | Gravity.END;
+params.bottomMargin = dp(ctx, 72);
+params.rightMargin = dp(ctx, 16);
 
             button.setOnClickListener(v -> {
                 currentIndex = (currentIndex + 1) % MODES.length;
