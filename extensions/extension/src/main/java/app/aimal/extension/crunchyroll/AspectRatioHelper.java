@@ -16,12 +16,11 @@ import android.widget.Toast;
 public final class AspectRatioHelper {
 
     private static final int BUTTON_ID = 0x7f0a9999;
-    private static final int[] MODES  = {0, 3, 4, 1};
+    private static final int[] MODES = {0, 3, 4, 1};
     private static final String[] LABELS = {"Fit", "Fill", "Crop", "16:9"};
     private static int currentIndex = 0;
 
     public static void addAspectRatioButton(View playerView) {
-        // Delay so CR finishes inflating its own overlays first
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             try {
                 if (!(playerView instanceof ViewGroup)) return;
@@ -29,7 +28,6 @@ public final class AspectRatioHelper {
                 if (parent.findViewById(BUTTON_ID) != null) return;
 
                 Context ctx = playerView.getContext();
-
                 TextView button = new TextView(ctx);
                 button.setId(BUTTON_ID);
                 button.setText(LABELS[currentIndex]);
@@ -55,7 +53,6 @@ public final class AspectRatioHelper {
                     currentIndex = (currentIndex + 1) % MODES.length;
                     int mode = MODES[currentIndex];
                     String label = LABELS[currentIndex];
-
                     try {
                         Class<?> cls = playerView.getClass();
                         while (cls != null) {
@@ -70,16 +67,14 @@ public final class AspectRatioHelper {
                             }
                         }
                     } catch (Exception ignored) {}
-
                     button.setText(label);
                     Toast.makeText(v.getContext(),
                             "Aspect ratio: " + label, Toast.LENGTH_SHORT).show();
                 });
 
                 parent.addView(button, params);
-
             } catch (Exception ignored) {}
-        }, 500); // 1.5s delay - after CR's own views are set up
+        }, 500);
     }
 
     private static int dp(Context ctx, int dp) {
