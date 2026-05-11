@@ -4,26 +4,21 @@ import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
 import com.android.tools.smali.dexlib2.AccessFlags
-import app.morphe.patcher.patch.BytecodePatchContext
 
-/**
- * Helper: finds the isEnabled() boolean method in the same class
- * as the given toString fingerprint, and forces it to return the
- * specified value.
- */
-context(_: BytecodePatchContext)
 private fun forceConfigFlag(
     toStringFingerprint: Fingerprint,
     returnValue: Boolean,
 ) {
     val configClass = toStringFingerprint.classDef.type
+    val value = if (returnValue) 1 else 0
+
     val isEnabledFingerprint = Fingerprint(
-        definingClass = configClass,
         returnType = "Z",
         accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
         parameters = listOf(),
+        custom = { _, classDef -> classDef.type == configClass },
     )
-    val value = if (returnValue) 1 else 0
+
     isEnabledFingerprint.method.addInstructions(
         0,
         """
@@ -33,8 +28,6 @@ private fun forceConfigFlag(
     )
 }
 
-// ── Disable Pre-Roll Ads ──
-
 @Suppress("unused")
 val disablePreRollAdsPatch = bytecodePatch(
     name = "Disable pre-roll ads",
@@ -42,13 +35,8 @@ val disablePreRollAdsPatch = bytecodePatch(
     default = true,
 ) {
     compatibleWith(CRUNCHYROLL)
-
-    execute {
-        forceConfigFlag(SvodPreRollConfigToStringFingerprint, false)
-    }
+    execute { forceConfigFlag(SvodPreRollConfigToStringFingerprint, false) }
 }
-
-// ── Enable PiP ──
 
 @Suppress("unused")
 val enablePipPatch = bytecodePatch(
@@ -57,28 +45,18 @@ val enablePipPatch = bytecodePatch(
     default = true,
 ) {
     compatibleWith(CRUNCHYROLL)
-
-    execute {
-        forceConfigFlag(PipConfigToStringFingerprint, true)
-    }
+    execute { forceConfigFlag(PipConfigToStringFingerprint, true) }
 }
-
-// ── Disable In-App Review Popups ──
 
 @Suppress("unused")
 val disableInAppReviewPatch = bytecodePatch(
     name = "Disable review popups",
-    description = "Stops the \"Rate us\" popup from appearing.",
+    description = "Stops the Rate us popup from appearing.",
     default = true,
 ) {
     compatibleWith(CRUNCHYROLL)
-
-    execute {
-        forceConfigFlag(InAppReviewConfigToStringFingerprint, false)
-    }
+    execute { forceConfigFlag(InAppReviewConfigToStringFingerprint, false) }
 }
-
-// ── Disable In-App Update Nags ──
 
 @Suppress("unused")
 val disableInAppUpdatesPatch = bytecodePatch(
@@ -87,13 +65,8 @@ val disableInAppUpdatesPatch = bytecodePatch(
     default = true,
 ) {
     compatibleWith(CRUNCHYROLL)
-
-    execute {
-        forceConfigFlag(InAppUpdatesConfigToStringFingerprint, false)
-    }
+    execute { forceConfigFlag(InAppUpdatesConfigToStringFingerprint, false) }
 }
-
-// ── Enable Chromecast Skip Events ──
 
 @Suppress("unused")
 val enableChromecastSkipPatch = bytecodePatch(
@@ -102,13 +75,8 @@ val enableChromecastSkipPatch = bytecodePatch(
     default = true,
 ) {
     compatibleWith(CRUNCHYROLL)
-
-    execute {
-        forceConfigFlag(ChromecastSkipEventsConfigToStringFingerprint, true)
-    }
+    execute { forceConfigFlag(ChromecastSkipEventsConfigToStringFingerprint, true) }
 }
-
-// ── Enable Content Labels ──
 
 @Suppress("unused")
 val enableContentLabelsPatch = bytecodePatch(
@@ -117,13 +85,8 @@ val enableContentLabelsPatch = bytecodePatch(
     default = false,
 ) {
     compatibleWith(CRUNCHYROLL)
-
-    execute {
-        forceConfigFlag(ContentLabelsConfigToStringFingerprint, true)
-    }
+    execute { forceConfigFlag(ContentLabelsConfigToStringFingerprint, true) }
 }
-
-// ── Enable Share Redesign ──
 
 @Suppress("unused")
 val enableShareRedesignPatch = bytecodePatch(
@@ -132,28 +95,18 @@ val enableShareRedesignPatch = bytecodePatch(
     default = false,
 ) {
     compatibleWith(CRUNCHYROLL)
-
-    execute {
-        forceConfigFlag(ShareRedesignConfigToStringFingerprint, true)
-    }
+    execute { forceConfigFlag(ShareRedesignConfigToStringFingerprint, true) }
 }
-
-// ── Enable Manga ──
 
 @Suppress("unused")
 val enableMangaPatch = bytecodePatch(
     name = "Enable manga",
-    description = "Enables the manga reader section (may be region-locked).",
+    description = "Enables the manga reader section.",
     default = true,
 ) {
     compatibleWith(CRUNCHYROLL)
-
-    execute {
-        forceConfigFlag(MangaConfigToStringFingerprint, true)
-    }
+    execute { forceConfigFlag(MangaConfigToStringFingerprint, true) }
 }
-
-// ── Enable Home Feed Hero Carousel ──
 
 @Suppress("unused")
 val enableHeroCarouselPatch = bytecodePatch(
@@ -162,8 +115,5 @@ val enableHeroCarouselPatch = bytecodePatch(
     default = false,
 ) {
     compatibleWith(CRUNCHYROLL)
-
-    execute {
-        forceConfigFlag(HomeFeedHeroCarouselConfigToStringFingerprint, true)
-    }
+    execute { forceConfigFlag(HomeFeedHeroCarouselConfigToStringFingerprint, true) }
 }
