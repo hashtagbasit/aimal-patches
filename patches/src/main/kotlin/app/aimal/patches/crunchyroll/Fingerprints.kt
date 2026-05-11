@@ -125,13 +125,14 @@ object HomeFeedHeroCarouselConfigToStringFingerprint : Fingerprint(
 
 // ── Aspect Ratio ──
 
-object PlayerViewOnAttachedFingerprint : Fingerprint(
+object PlayerViewConstructorFingerprint : Fingerprint(
     definingClass = "Lcom/crunchyroll/player/presentation/playerview/InternalPlayerViewLayout;",
     returnType = "V",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
+    parameters = listOf(
+        "Landroid/content/Context;",
+        "Landroid/util/AttributeSet;",
+    ),
     filters = listOf(
-        string("getContext(...)"),
-        string("playerControlsAnalytics"),
+        string("layout_internal_player"),
     ),
 )
