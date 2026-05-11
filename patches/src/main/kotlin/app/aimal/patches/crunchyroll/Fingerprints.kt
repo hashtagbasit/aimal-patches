@@ -122,3 +122,15 @@ object HomeFeedHeroCarouselConfigToStringFingerprint : Fingerprint(
         string("HomeFeedHeroCarouselConfigImpl(isEnabled="),
     ),
 )
+
+// ── Aspect Ratio ──
+
+object PlayerViewOnAttachedFingerprint : Fingerprint(
+    definingClass = "Lcom/crunchyroll/player/presentation/playerview/InternalPlayerViewLayout;",
+    returnType = "V",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    parameters = listOf(),
+    filters = listOf(
+        string("playerControlsAnalytics"),
+    ),
+)
