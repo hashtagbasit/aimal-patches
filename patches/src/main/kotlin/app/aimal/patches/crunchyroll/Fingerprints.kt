@@ -24,7 +24,7 @@ object PlayerSettingsViewModelConstructorFingerprint : Fingerprint(
     ),
 )
 
-// ── Disable Pre-Roll Ads ──
+// ── Feature Flags ──
 
 object SvodPreRollConfigToStringFingerprint : Fingerprint(
     returnType = "Ljava/lang/String;",
@@ -35,8 +35,6 @@ object SvodPreRollConfigToStringFingerprint : Fingerprint(
     ),
 )
 
-// ── Enable PiP ──
-
 object PipConfigToStringFingerprint : Fingerprint(
     returnType = "Ljava/lang/String;",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
@@ -45,8 +43,6 @@ object PipConfigToStringFingerprint : Fingerprint(
         string("PipConfigImpl(_isEnabled="),
     ),
 )
-
-// ── Disable In-App Review ──
 
 object InAppReviewConfigToStringFingerprint : Fingerprint(
     returnType = "Ljava/lang/String;",
@@ -57,8 +53,6 @@ object InAppReviewConfigToStringFingerprint : Fingerprint(
     ),
 )
 
-// ── Disable In-App Updates ──
-
 object InAppUpdatesConfigToStringFingerprint : Fingerprint(
     returnType = "Ljava/lang/String;",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
@@ -67,8 +61,6 @@ object InAppUpdatesConfigToStringFingerprint : Fingerprint(
         string("InAppUpdatesConfigImpl(isEnabled="),
     ),
 )
-
-// ── Enable Chromecast Skip Events ──
 
 object ChromecastSkipEventsConfigToStringFingerprint : Fingerprint(
     returnType = "Ljava/lang/String;",
@@ -79,8 +71,6 @@ object ChromecastSkipEventsConfigToStringFingerprint : Fingerprint(
     ),
 )
 
-// ── Enable Content Labels ──
-
 object ContentLabelsConfigToStringFingerprint : Fingerprint(
     returnType = "Ljava/lang/String;",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
@@ -89,8 +79,6 @@ object ContentLabelsConfigToStringFingerprint : Fingerprint(
         string("ContentLabelsConfigImpl(isEnabled="),
     ),
 )
-
-// ── Enable Share Redesign ──
 
 object ShareRedesignConfigToStringFingerprint : Fingerprint(
     returnType = "Ljava/lang/String;",
@@ -101,8 +89,6 @@ object ShareRedesignConfigToStringFingerprint : Fingerprint(
     ),
 )
 
-// ── Enable Manga ──
-
 object MangaConfigToStringFingerprint : Fingerprint(
     returnType = "Ljava/lang/String;",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
@@ -111,8 +97,6 @@ object MangaConfigToStringFingerprint : Fingerprint(
         string("MangaConfigImpl(isEnabled="),
     ),
 )
-
-// ── Enable Home Feed Hero Carousel ──
 
 object HomeFeedHeroCarouselConfigToStringFingerprint : Fingerprint(
     returnType = "Ljava/lang/String;",
@@ -126,10 +110,22 @@ object HomeFeedHeroCarouselConfigToStringFingerprint : Fingerprint(
 // ── Aspect Ratio ──
 
 object PlayerViewSetupFingerprint : Fingerprint(
-    definingClass = "Lcom/crunchyroll/player/presentation/playerview/InternalPlayerViewLayout;",
     returnType = "V",
     filters = listOf(
         string("buttonDataProviderLiveData"),
         string("notifyActivity"),
     ),
+    custom = { _, classDef ->
+        classDef.type == "Lcom/crunchyroll/player/presentation/playerview/InternalPlayerViewLayout;"
+    },
+)
+
+// ── Geo Spoof ──
+
+object CountryCodeUpdateFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf("Ljava/lang/String;"),
+    custom = { _, classDef ->
+        classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/CountryCodeProviderImpl;"
+    },
 )
