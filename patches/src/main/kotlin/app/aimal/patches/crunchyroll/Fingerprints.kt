@@ -107,15 +107,22 @@ object HomeFeedHeroCarouselConfigToStringFingerprint : Fingerprint(
     ),
 )
 
-// ── Aspect Ratio ──
+// Class fingerprint - finds InternalPlayerViewLayout via unique string in S3()
+object InternalPlayerViewLayoutClassFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf("Z"),
+    filters = listOf(
+        string("getAdViewGroup(...)"),
+    ),
+)
 
+// Method fingerprint - scoped to the class found above, targets x2()
 object PlayerViewSetupFingerprint : Fingerprint(
+    classFingerprint = InternalPlayerViewLayoutClassFingerprint,
     returnType = "V",
     parameters = listOf("Z", "Z", "L", "L", "L", "L"),
     filters = listOf(
         string("buttonDataProviderLiveData"),
-        string("notifyActivity"),
-        string("playerToolbarDataProvider"),
     ),
 )
 
