@@ -79,7 +79,7 @@ public final class AspectRatioHelper {
                 parent.addView(button, params);
 
             } catch (Exception ignored) {}
-        }, 1500); // 1.5s delay - after CR's own views are set up
+        }, 500); // 1.5s delay - after CR's own views are set up
     }
 
     private static int dp(Context ctx, int dp) {
