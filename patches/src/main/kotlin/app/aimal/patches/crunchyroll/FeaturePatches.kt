@@ -2,9 +2,11 @@ package app.aimal.patches.crunchyroll
 
 import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.patch.BytecodePatchContext
 import app.morphe.patcher.patch.bytecodePatch
 import com.android.tools.smali.dexlib2.AccessFlags
 
+context(BytecodePatchContext)
 private fun forceConfigFlag(
     toStringFingerprint: Fingerprint,
     returnValue: Boolean,
