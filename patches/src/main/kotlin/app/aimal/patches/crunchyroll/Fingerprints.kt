@@ -115,6 +115,7 @@ object PlayerViewSetupFingerprint : Fingerprint(
     filters = listOf(
         string("buttonDataProviderLiveData"),
         string("notifyActivity"),
+        string("playerToolbarDataProvider"),
     ),
 )
 
