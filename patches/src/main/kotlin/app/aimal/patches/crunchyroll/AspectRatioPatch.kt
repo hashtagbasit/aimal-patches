@@ -14,10 +14,12 @@ val aspectRatioPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        val method = PlayerViewSetupFingerprint.method
+        // Use S3() as hook - fires when player controls visibility changes
+        // Only 5 registers, safe for injection
+        // p0 = this (InternalPlayerViewLayout)
+        val method = InternalPlayerViewLayoutClassFingerprint.method
         val lastIndex = method.implementation!!.instructions.toList().size - 1
 
-        // p0 = this (InternalPlayerViewLayout)
         method.addInstructions(
             lastIndex,
             """
