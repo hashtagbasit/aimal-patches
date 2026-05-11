@@ -116,9 +116,6 @@ object PlayerViewSetupFingerprint : Fingerprint(
         string("buttonDataProviderLiveData"),
         string("notifyActivity"),
     ),
-    custom = { _, classDef ->
-        classDef.type == "Lcom/crunchyroll/player/presentation/playerview/InternalPlayerViewLayout;"
-    },
 )
 
 // ── Geo Spoof ──
