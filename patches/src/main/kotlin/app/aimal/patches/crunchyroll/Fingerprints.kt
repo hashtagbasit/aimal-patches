@@ -133,6 +133,6 @@ object PlayerViewConstructorFingerprint : Fingerprint(
         "Landroid/util/AttributeSet;",
     ),
     filters = listOf(
-        string("layout_internal_player"),
+        string("playerGesturesHandler"),
     ),
 )
