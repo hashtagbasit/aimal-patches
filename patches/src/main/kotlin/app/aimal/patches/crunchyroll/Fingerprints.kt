@@ -111,6 +111,7 @@ object HomeFeedHeroCarouselConfigToStringFingerprint : Fingerprint(
 
 object PlayerViewSetupFingerprint : Fingerprint(
     returnType = "V",
+    parameters = listOf("Z", "Z", "L", "L", "L", "L"),
     filters = listOf(
         string("buttonDataProviderLiveData"),
         string("notifyActivity"),
