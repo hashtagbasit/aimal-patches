@@ -14,9 +14,11 @@ val aspectRatioPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        val method = PlayerViewOnAttachedFingerprint.method
+        val method = PlayerViewConstructorFingerprint.method
         val lastIndex = method.implementation!!.instructions.size - 1
 
+        // p0 = this (InternalPlayerViewLayout extends FrameLayout)
+        // Inject at end of constructor after all views are added
         method.addInstructions(
             lastIndex,
             """
