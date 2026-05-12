@@ -14,16 +14,24 @@ val aspectRatioPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        // Use S3() as hook - fires when player controls visibility changes
-        // Only 5 registers, safe for injection
-        // p0 = this (InternalPlayerViewLayout)
         val method = InternalPlayerViewLayoutClassFingerprint.method
-        val lastIndex = method.implementation!!.instructions.toList().size - 1
+        val instructions = method.implementation!!.instructions.toList()
+        val lastIndex = instructions.size - 1
 
+        // S3(boolean) — p0=this, p1=boolean (true=show, false=hide)
+        // At the start: add button to player if not added yet
+        // Pass p1 to setButtonVisible so button follows controls visibility
         method.addInstructions(
-            lastIndex,
+            0,
             """
                 invoke-static {p0}, Lapp/aimal/extension/crunchyroll/AspectRatioHelper;->addAspectRatioButton(Landroid/view/View;)V
+            """,
+        )
+
+        method.addInstructions(
+            lastIndex + 1,
+            """
+                invoke-static {p1}, Lapp/aimal/extension/crunchyroll/AspectRatioHelper;->setButtonVisible(Z)V
             """,
         )
     }
