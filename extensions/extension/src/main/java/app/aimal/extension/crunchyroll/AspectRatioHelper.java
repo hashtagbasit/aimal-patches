@@ -9,7 +9,6 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,6 +19,9 @@ public final class AspectRatioHelper {
     private static final int[] MODES = {0, 3, 4, 1};
     private static final String[] LABELS = {"Fit", "Fill", "Crop", "16:9"};
     private static int currentIndex = 0;
+
+    private static final Handler handler = new Handler(Looper.getMainLooper());
+    private static Runnable visibilityChecker = null;
 
     public static void addAspectRatioButton(View playerView) {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
@@ -50,7 +52,6 @@ public final class AspectRatioHelper {
                 params.bottomMargin = dp(ctx, 80);
                 params.leftMargin = dp(ctx, 16);
 
-                // Start hidden
                 button.setVisibility(View.GONE);
 
                 button.setOnClickListener(v -> {
@@ -78,42 +79,65 @@ public final class AspectRatioHelper {
 
                 parent.addView(button, params);
 
-                // Watch for any child visibility changes to detect controls show/hide
-                parent.getViewTreeObserver().addOnGlobalLayoutListener(
-                        new ViewTreeObserver.OnGlobalLayoutListener() {
+                // Poll every 300ms: find PlayerControlsLayout by class name
+                // and check its alpha (CR fades it out instead of hiding)
+                visibilityChecker = new Runnable() {
                     @Override
-                    public void onGlobalLayout() {
+                    public void run() {
                         try {
-                            boolean controlsVisible = areControlsVisible(parent, button);
-                            button.setVisibility(controlsVisible ? View.VISIBLE : View.GONE);
+                            float controlsAlpha = getControlsAlpha(parent, button);
+                            // Show our button only when controls are visible (alpha > 0.5)
+                            button.setVisibility(controlsAlpha > 0.5f ? View.VISIBLE : View.GONE);
                         } catch (Exception ignored) {}
+                        handler.postDelayed(this, 300);
                     }
-                });
+                };
+                handler.post(visibilityChecker);
 
             } catch (Exception ignored) {}
         }, 500);
     }
 
-    /**
-     * Checks if player controls are currently visible by scanning
-     * sibling views for any visible view that looks like a controls overlay.
-     * Controls layout has alpha > 0 and is visible when showing.
-     */
-    private static boolean areControlsVisible(ViewGroup parent, View button) {
+    private static float getControlsAlpha(ViewGroup parent, View button) {
+        // Walk the view hierarchy to find PlayerControlsLayout
+        // It's a direct or near-direct child of the player FrameLayout
         for (int i = 0; i < parent.getChildCount(); i++) {
             View child = parent.getChildAt(i);
             if (child == button) continue;
-            if (child.getVisibility() == View.VISIBLE && child.getAlpha() > 0.1f) {
-                // Found a visible sibling — controls are showing
-                return true;
+            String className = child.getClass().getName();
+            // PlayerControlsLayout is the controls overlay
+            if (className.contains("PlayerControlsLayout") ||
+                className.contains("PlayerControls")) {
+                return child.getAlpha();
+            }
+            // Also check one level deeper
+            if (child instanceof ViewGroup) {
+                ViewGroup vg = (ViewGroup) child;
+                for (int j = 0; j < vg.getChildCount(); j++) {
+                    View grandChild = vg.getChildAt(j);
+                    String gcName = grandChild.getClass().getName();
+                    if (gcName.contains("PlayerControlsLayout") ||
+                        gcName.contains("PlayerControls")) {
+                        return grandChild.getAlpha();
+                    }
+                }
             }
         }
-        return false;
+        // Fallback: check if any non-surface child has alpha > 0
+        // Surface views (video) have no alpha concept
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            View child = parent.getChildAt(i);
+            if (child == button) continue;
+            if (!child.getClass().getName().contains("Surface") &&
+                child.getAlpha() > 0.5f &&
+                child.getVisibility() == View.VISIBLE) {
+                return child.getAlpha();
+            }
+        }
+        return 0f;
     }
 
-    public static void setButtonVisible(boolean visible) {
-        // Kept for compatibility, no-op now
-    }
+    public static void setButtonVisible(boolean visible) {}
 
     private static int dp(Context ctx, int dp) {
         return (int) TypedValue.applyDimension(
