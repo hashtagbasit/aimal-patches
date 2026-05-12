@@ -13,15 +13,15 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Field;
+
 public final class AspectRatioHelper {
 
     private static final int BUTTON_ID = 0x7f0a9999;
     private static final int[] MODES = {0, 3, 4, 1};
     private static final String[] LABELS = {"Fit", "Fill", "Crop", "16:9"};
     private static int currentIndex = 0;
-
     private static final Handler handler = new Handler(Looper.getMainLooper());
-    private static Runnable visibilityChecker = null;
 
     public static void addAspectRatioButton(View playerView) {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
@@ -79,62 +79,46 @@ public final class AspectRatioHelper {
 
                 parent.addView(button, params);
 
-                // Poll every 300ms: find PlayerControlsLayout by class name
-                // and check its alpha (CR fades it out instead of hiding)
-                visibilityChecker = new Runnable() {
+                // Find PlayerControlsLayout via reflection on f40977I.f16300b
+                // f40977I = LayoutInternalPlayerBinding field on InternalPlayerViewLayout
+                // f16300b = PlayerControlsLayout field on LayoutInternalPlayerBinding
+                View[] controlsRef = new View[1];
+                try {
+                    for (Field f : playerView.getClass().getDeclaredFields()) {
+                        f.setAccessible(true);
+                        Object binding = f.get(playerView);
+                        if (binding == null) continue;
+                        for (Field bf : binding.getClass().getDeclaredFields()) {
+                            bf.setAccessible(true);
+                            Object v = bf.get(binding);
+                            if (v instanceof View) {
+                                String name = v.getClass().getName();
+                                if (name.contains("PlayerControlsLayout")) {
+                                    controlsRef[0] = (View) v;
+                                    break;
+                                }
+                            }
+                        }
+                        if (controlsRef[0] != null) break;
+                    }
+                } catch (Exception ignored) {}
+
+                // Poll every 250ms watching the controls alpha
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            float controlsAlpha = getControlsAlpha(parent, button);
-                            // Show our button only when controls are visible (alpha > 0.5)
-                            button.setVisibility(controlsAlpha > 0.5f ? View.VISIBLE : View.GONE);
+                            if (controlsRef[0] != null) {
+                                float alpha = controlsRef[0].getAlpha();
+                                button.setVisibility(alpha > 0.1f ? View.VISIBLE : View.GONE);
+                            }
                         } catch (Exception ignored) {}
-                        handler.postDelayed(this, 300);
+                        handler.postDelayed(this, 250);
                     }
-                };
-                handler.post(visibilityChecker);
+                });
 
             } catch (Exception ignored) {}
         }, 500);
-    }
-
-    private static float getControlsAlpha(ViewGroup parent, View button) {
-        // Walk the view hierarchy to find PlayerControlsLayout
-        // It's a direct or near-direct child of the player FrameLayout
-        for (int i = 0; i < parent.getChildCount(); i++) {
-            View child = parent.getChildAt(i);
-            if (child == button) continue;
-            String className = child.getClass().getName();
-            // PlayerControlsLayout is the controls overlay
-            if (className.contains("PlayerControlsLayout") ||
-                className.contains("PlayerControls")) {
-                return child.getAlpha();
-            }
-            // Also check one level deeper
-            if (child instanceof ViewGroup) {
-                ViewGroup vg = (ViewGroup) child;
-                for (int j = 0; j < vg.getChildCount(); j++) {
-                    View grandChild = vg.getChildAt(j);
-                    String gcName = grandChild.getClass().getName();
-                    if (gcName.contains("PlayerControlsLayout") ||
-                        gcName.contains("PlayerControls")) {
-                        return grandChild.getAlpha();
-                    }
-                }
-            }
-        }
-        // Fallback: check if any non-surface child has alpha > 0
-        // Surface views (video) have no alpha concept
-        for (int i = 0; i < parent.getChildCount(); i++) {
-            View child = parent.getChildAt(i);
-            if (child == button) continue;
-            if (!child.getClass().getName().contains("Surface") &&
-                child.getAlpha() > 0.5f &&
-                child.getVisibility() == View.VISIBLE) {
-                return child.getAlpha();
-            }
-        }
-        return 0f;
     }
 
     public static void setButtonVisible(boolean visible) {}
