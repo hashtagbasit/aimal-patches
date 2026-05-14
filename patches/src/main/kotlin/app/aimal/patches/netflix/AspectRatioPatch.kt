@@ -14,11 +14,8 @@ val aspectRatioPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        val method = PlaylistVideoViewConstructorFingerprint.method
-        val lastIndex = method.implementation!!.instructions.toList().size - 1
-
-        method.addInstructions(
-            lastIndex,
+        AttachPlaybackSessionFingerprint.method.addInstructions(
+            0,
             """
                 invoke-static {p0}, Lapp/aimal/extension/netflix/NetflixAspectRatioHelper;->addAspectRatioButton(Landroid/view/View;)V
             """,
