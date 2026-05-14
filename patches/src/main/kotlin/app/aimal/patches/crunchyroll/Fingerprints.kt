@@ -145,3 +145,13 @@ object CountryCodeGetterFingerprint : Fingerprint(
         classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/MobileCountryCodeProviderImpl;"
     },
 )
+
+object CountryCodeUpdateFingerprint : Fingerprint(
+    returnType = "V",
+    accessFlags = listOf(AccessFlags.PUBLIC),
+    parameters = listOf("Ljava/lang/String;"),
+    custom = { method, classDef ->
+        classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/MobileCountryCodeProviderImpl;" &&
+            method.name == "updateCountryCode"
+    },
+)

@@ -21,5 +21,12 @@ val geoSpoofPatch = bytecodePatch(
                 return-object v0
             """,
         )
+
+        CountryCodeUpdateFingerprint.method.addInstructions(
+            0,
+            """
+                const-string p1, "US"
+            """,
+        )
     }
 }
