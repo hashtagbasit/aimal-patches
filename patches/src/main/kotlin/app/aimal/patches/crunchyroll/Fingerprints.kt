@@ -179,3 +179,23 @@ object LocalePathInterceptorFingerprint : Fingerprint(
         classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/LocalePathInterceptor;"
     },
 )
+
+object AnonymousTokenCountryFingerprint : Fingerprint(
+    returnType = "Ljava/lang/String;",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    parameters = listOf(),
+    custom = { method, classDef ->
+        classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/model/AnonymousTokenResponse;" &&
+            method.name == "getCountry"
+    },
+)
+
+object UserTokenCountryFingerprint : Fingerprint(
+    returnType = "Ljava/lang/String;",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    parameters = listOf(),
+    custom = { method, classDef ->
+        classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/model/UserTokenResponse;" &&
+            method.name == "getCountry"
+    },
+)
