@@ -117,12 +117,30 @@ object PlayerViewSetupFingerprint : Fingerprint(
     ),
 )
 
+// ── Aspect Ratio Visibility ──
+
+object ShowControlsFingerprint : Fingerprint(
+    classFingerprint = InternalPlayerViewLayoutClassFingerprint,
+    returnType = "V",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    parameters = listOf(),
+    custom = { method, _ -> method.name == "showControls" },
+)
+
+object HideControlsFingerprint : Fingerprint(
+    classFingerprint = InternalPlayerViewLayoutClassFingerprint,
+    returnType = "V",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    parameters = listOf(),
+    custom = { method, _ -> method.name == "hideControls" },
+)
+
 // ── Geo Spoof ──
 
-object CountryCodeUpdateFingerprint : Fingerprint(
-    returnType = "V",
+object CountryCodeGetterFingerprint : Fingerprint(
+    returnType = "Ljava/lang/String;",
     accessFlags = listOf(AccessFlags.PUBLIC),
-    parameters = listOf("Ljava/lang/String;"),
+    parameters = listOf(),
     custom = { _, classDef ->
         classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/MobileCountryCodeProviderImpl;"
     },

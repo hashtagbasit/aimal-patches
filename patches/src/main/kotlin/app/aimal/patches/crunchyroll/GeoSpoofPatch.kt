@@ -14,11 +14,11 @@ val geoSpoofPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        CountryCodeUpdateFingerprint.method.addInstructions(
+        CountryCodeGetterFingerprint.method.addInstructions(
             0,
             """
-                invoke-static {p1}, Lapp/aimal/extension/crunchyroll/GeoHelper;->getCountryCode(Ljava/lang/String;)Ljava/lang/String;
-                move-result-object p1
+                const-string v0, "US"
+                return-object v0
             """,
         )
     }

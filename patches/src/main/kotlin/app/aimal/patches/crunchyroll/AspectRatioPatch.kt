@@ -23,5 +23,19 @@ val aspectRatioPatch = bytecodePatch(
                 invoke-static {p0}, Lapp/aimal/extension/crunchyroll/AspectRatioHelper;->addAspectRatioButton(Landroid/view/View;)V
             """,
         )
+
+        ShowControlsFingerprint.method.addInstructions(
+            0,
+            """
+                invoke-static {p0}, Lapp/aimal/extension/crunchyroll/AspectRatioHelper;->onShowControls(Landroid/view/View;)V
+            """,
+        )
+
+        HideControlsFingerprint.method.addInstructions(
+            0,
+            """
+                invoke-static {p0}, Lapp/aimal/extension/crunchyroll/AspectRatioHelper;->onHideControls(Landroid/view/View;)V
+            """,
+        )
     }
 }
