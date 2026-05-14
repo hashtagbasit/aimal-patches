@@ -42,6 +42,24 @@ val geoSpoofPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
+        // Spoof country at the source: token responses from the server
+        AnonymousTokenCountryFingerprint.method.addInstructions(
+            0,
+            """
+                const-string v0, "US"
+                return-object v0
+            """,
+        )
+
+        UserTokenCountryFingerprint.method.addInstructions(
+            0,
+            """
+                const-string v0, "US"
+                return-object v0
+            """,
+        )
+
+        // Spoof the country code provider getter and setter
         CountryCodeGetterFingerprint.method.addInstructions(
             0,
             """
@@ -57,6 +75,7 @@ val geoSpoofPatch = bytecodePatch(
             """,
         )
 
+        // Spoof the locale on all API requests
         spoofLocaleInterceptor(LocaleInterceptorFingerprint)
         spoofLocaleInterceptor(LocalePathInterceptorFingerprint)
     }
