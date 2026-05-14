@@ -13,8 +13,6 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.lang.reflect.Field;
-
 public final class AspectRatioHelper {
 
     private static final int BUTTON_ID = 0x7f0a9999;
@@ -28,9 +26,6 @@ public final class AspectRatioHelper {
                 if (!(playerView instanceof ViewGroup)) return;
                 ViewGroup parent = (ViewGroup) playerView;
                 if (parent.findViewById(BUTTON_ID) != null) return;
-
-                ViewGroup controlsLayout = findControlsLayout(playerView);
-                ViewGroup buttonParent = controlsLayout != null ? controlsLayout : parent;
 
                 Context ctx = playerView.getContext();
                 TextView button = new TextView(ctx);
@@ -53,6 +48,9 @@ public final class AspectRatioHelper {
                 params.gravity = Gravity.BOTTOM | Gravity.START;
                 params.bottomMargin = dp(ctx, 80);
                 params.leftMargin = dp(ctx, 16);
+
+                button.setAlpha(0f);
+                button.setVisibility(View.GONE);
 
                 button.setOnClickListener(v -> {
                     currentIndex = (currentIndex + 1) % MODES.length;
@@ -77,30 +75,34 @@ public final class AspectRatioHelper {
                             "Aspect ratio: " + label, Toast.LENGTH_SHORT).show();
                 });
 
-                buttonParent.addView(button, params);
+                parent.addView(button, params);
 
             } catch (Exception ignored) {}
         }, 500);
     }
 
-    private static ViewGroup findControlsLayout(View playerView) {
+    public static void onShowControls(View playerView) {
         try {
-            for (Field f : playerView.getClass().getDeclaredFields()) {
-                f.setAccessible(true);
-                Object binding = f.get(playerView);
-                if (binding == null) continue;
-                for (Field bf : binding.getClass().getDeclaredFields()) {
-                    bf.setAccessible(true);
-                    Object v = bf.get(binding);
-                    if (v instanceof ViewGroup) {
-                        if (v.getClass().getName().contains("PlayerControlsLayout")) {
-                            return (ViewGroup) v;
-                        }
-                    }
-                }
-            }
+            View button = playerView.findViewById(BUTTON_ID);
+            if (button == null) return;
+            button.setVisibility(View.VISIBLE);
+            button.animate()
+                    .alpha(1f)
+                    .setDuration(300)
+                    .start();
         } catch (Exception ignored) {}
-        return null;
+    }
+
+    public static void onHideControls(View playerView) {
+        try {
+            View button = playerView.findViewById(BUTTON_ID);
+            if (button == null) return;
+            button.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction(() -> button.setVisibility(View.GONE))
+                    .start();
+        } catch (Exception ignored) {}
     }
 
     private static int dp(Context ctx, int dp) {
