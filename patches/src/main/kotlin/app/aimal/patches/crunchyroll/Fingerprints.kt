@@ -44,12 +44,12 @@ object PipConfigToStringFingerprint : Fingerprint(
     ),
 )
 
-object InAppReviewConfigToStringFingerprint : Fingerprint(
-    returnType = "Ljava/lang/String;",
+// Finds the InAppReviewConfigGateway class via its getConfig() method
+object InAppReviewGatewayGetConfigFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     parameters = listOf(),
     filters = listOf(
-        string("InAppReviewConfigImpl(isEnabled="),
+        string("in_app_review"),
     ),
 )
 
@@ -98,15 +98,6 @@ object MangaConfigToStringFingerprint : Fingerprint(
     ),
 )
 
-object HomeFeedHeroCarouselConfigToStringFingerprint : Fingerprint(
-    returnType = "Ljava/lang/String;",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    filters = listOf(
-        string("HomeFeedHeroCarouselConfigImpl(isEnabled="),
-    ),
-)
-
 // Class fingerprint - finds InternalPlayerViewLayout via unique string in S3()
 object InternalPlayerViewLayoutClassFingerprint : Fingerprint(
     returnType = "V",
@@ -130,8 +121,9 @@ object PlayerViewSetupFingerprint : Fingerprint(
 
 object CountryCodeUpdateFingerprint : Fingerprint(
     returnType = "V",
+    accessFlags = listOf(AccessFlags.PUBLIC),
     parameters = listOf("Ljava/lang/String;"),
     custom = { _, classDef ->
-        classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/CountryCodeProviderImpl;"
+        classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/MobileCountryCodeProviderImpl;"
     },
 )

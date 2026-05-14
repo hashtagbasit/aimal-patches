@@ -57,7 +57,25 @@ val disableInAppReviewPatch = bytecodePatch(
     default = true,
 ) {
     compatibleWith(CRUNCHYROLL)
-    execute { forceConfigFlag(InAppReviewConfigToStringFingerprint, false) }
+
+    execute {
+        val gatewayClass = InAppReviewGatewayGetConfigFingerprint.classDef.type
+
+        val isSupportedFingerprint = Fingerprint(
+            returnType = "Z",
+            accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+            parameters = listOf(),
+            custom = { _, classDef -> classDef.type == gatewayClass },
+        )
+
+        isSupportedFingerprint.method.addInstructions(
+            0,
+            """
+                const/4 v0, 0x0
+                return v0
+            """,
+        )
+    }
 }
 
 @Suppress("unused")
@@ -110,12 +128,3 @@ val enableMangaPatch = bytecodePatch(
     execute { forceConfigFlag(MangaConfigToStringFingerprint, true) }
 }
 
-@Suppress("unused")
-val enableHeroCarouselPatch = bytecodePatch(
-    name = "Enable hero carousel",
-    description = "Enables the hero carousel on the home feed.",
-    default = false,
-) {
-    compatibleWith(CRUNCHYROLL)
-    execute { forceConfigFlag(HomeFeedHeroCarouselConfigToStringFingerprint, true) }
-}
