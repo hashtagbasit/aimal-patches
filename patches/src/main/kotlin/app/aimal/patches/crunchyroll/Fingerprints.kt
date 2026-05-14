@@ -155,3 +155,27 @@ object CountryCodeUpdateFingerprint : Fingerprint(
             method.name == "updateCountryCode"
     },
 )
+
+object LocaleInterceptorFingerprint : Fingerprint(
+    returnType = "Lokhttp3/Response;",
+    accessFlags = listOf(AccessFlags.PUBLIC),
+    parameters = listOf("Lokhttp3/Interceptor\$Chain;"),
+    filters = listOf(
+        string("locale"),
+    ),
+    custom = { _, classDef ->
+        classDef.type == "Lcom/ellation/crunchyroll/api/LocaleInterceptor;"
+    },
+)
+
+object LocalePathInterceptorFingerprint : Fingerprint(
+    returnType = "Lokhttp3/Response;",
+    accessFlags = listOf(AccessFlags.PUBLIC),
+    parameters = listOf("Lokhttp3/Interceptor\$Chain;"),
+    filters = listOf(
+        string("{locale}"),
+    ),
+    custom = { _, classDef ->
+        classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/LocalePathInterceptor;"
+    },
+)
