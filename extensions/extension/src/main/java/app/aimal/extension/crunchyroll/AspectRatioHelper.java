@@ -21,7 +21,6 @@ public final class AspectRatioHelper {
     private static final int[] MODES = {0, 3, 4, 1};
     private static final String[] LABELS = {"Fit", "Fill", "Crop", "16:9"};
     private static int currentIndex = 0;
-    private static final Handler handler = new Handler(Looper.getMainLooper());
 
     public static void addAspectRatioButton(View playerView) {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
@@ -29,6 +28,9 @@ public final class AspectRatioHelper {
                 if (!(playerView instanceof ViewGroup)) return;
                 ViewGroup parent = (ViewGroup) playerView;
                 if (parent.findViewById(BUTTON_ID) != null) return;
+
+                ViewGroup controlsLayout = findControlsLayout(playerView);
+                ViewGroup buttonParent = controlsLayout != null ? controlsLayout : parent;
 
                 Context ctx = playerView.getContext();
                 TextView button = new TextView(ctx);
@@ -51,8 +53,6 @@ public final class AspectRatioHelper {
                 params.gravity = Gravity.BOTTOM | Gravity.START;
                 params.bottomMargin = dp(ctx, 80);
                 params.leftMargin = dp(ctx, 16);
-
-                button.setVisibility(View.GONE);
 
                 button.setOnClickListener(v -> {
                     currentIndex = (currentIndex + 1) % MODES.length;
@@ -77,51 +77,31 @@ public final class AspectRatioHelper {
                             "Aspect ratio: " + label, Toast.LENGTH_SHORT).show();
                 });
 
-                parent.addView(button, params);
-
-                // Find PlayerControlsLayout via reflection on f40977I.f16300b
-                // f40977I = LayoutInternalPlayerBinding field on InternalPlayerViewLayout
-                // f16300b = PlayerControlsLayout field on LayoutInternalPlayerBinding
-                View[] controlsRef = new View[1];
-                try {
-                    for (Field f : playerView.getClass().getDeclaredFields()) {
-                        f.setAccessible(true);
-                        Object binding = f.get(playerView);
-                        if (binding == null) continue;
-                        for (Field bf : binding.getClass().getDeclaredFields()) {
-                            bf.setAccessible(true);
-                            Object v = bf.get(binding);
-                            if (v instanceof View) {
-                                String name = v.getClass().getName();
-                                if (name.contains("PlayerControlsLayout")) {
-                                    controlsRef[0] = (View) v;
-                                    break;
-                                }
-                            }
-                        }
-                        if (controlsRef[0] != null) break;
-                    }
-                } catch (Exception ignored) {}
-
-                // Poll every 250ms watching the controls alpha
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            if (controlsRef[0] != null) {
-                                float alpha = controlsRef[0].getAlpha();
-                                button.setVisibility(alpha > 0.1f ? View.VISIBLE : View.GONE);
-                            }
-                        } catch (Exception ignored) {}
-                        handler.postDelayed(this, 250);
-                    }
-                });
+                buttonParent.addView(button, params);
 
             } catch (Exception ignored) {}
         }, 500);
     }
 
-    public static void setButtonVisible(boolean visible) {}
+    private static ViewGroup findControlsLayout(View playerView) {
+        try {
+            for (Field f : playerView.getClass().getDeclaredFields()) {
+                f.setAccessible(true);
+                Object binding = f.get(playerView);
+                if (binding == null) continue;
+                for (Field bf : binding.getClass().getDeclaredFields()) {
+                    bf.setAccessible(true);
+                    Object v = bf.get(binding);
+                    if (v instanceof ViewGroup) {
+                        if (v.getClass().getName().contains("PlayerControlsLayout")) {
+                            return (ViewGroup) v;
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
 
     private static int dp(Context ctx, int dp) {
         return (int) TypedValue.applyDimension(
