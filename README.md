@@ -11,6 +11,8 @@ TODO: Update this about section with a brief introduction/summary about this rep
 
 <!-- PATCHES_START EXPANDED -->
 
+feat: add ARY Plus patches (downloads, Downloads tab, 1.25x speed)
+
 <!-- Do not modify this section by hand. The patch list is generated when release.yml creates a new release.
      
      If you wish for the patches list to be collapsed, then remove the word 'EXPANDED' from the comment tag above.
