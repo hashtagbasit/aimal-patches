@@ -166,12 +166,20 @@ val downloadsPatch = bytecodePatch(
         // 2. "Download all" control on every screen that lists a show's episodes.
         //
         // p1 is the Models.Episode holding the list, p2 the hosting Context.
-        // Injected at instruction 0: only constructor parameters are read, so
-        // this does not depend on any field being assigned yet.
-        AdapterConstructorFingerprint.matchOrNull()?.method?.addInstructions(
-            0,
-            "invoke-static { p2, p1 }, $SERIES_BUTTON->attach(Landroid/content/Context;Ljava/lang/Object;)V"
-        )
+        //
+        // This MUST NOT be injected at instruction 0. A constructor has to invoke
+        // its super constructor before anything else; code placed ahead of that
+        // fails dex verification, and a VerifyError on AdapterYtProfile takes out
+        // every episode list in the app. Injecting before the trailing return-void
+        // puts the call after both super() and all field assignments.
+        AdapterConstructorFingerprint.matchOrNull()?.let { match ->
+            val method = match.method
+            val returnIndex = method.implementation!!.instructions.count() - 1
+            method.addInstructions(
+                returnIndex,
+                "invoke-static { p2, p1 }, $SERIES_BUTTON->attach(Landroid/content/Context;Ljava/lang/Object;)V"
+            )
+        }
 
         // 3. Route the new tab before the app's own switch runs.
         //
