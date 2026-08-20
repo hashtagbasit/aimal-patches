@@ -88,7 +88,16 @@ public final class DownloadsFragment extends Fragment {
         if (context == null || adapter == null) {
             return;
         }
-        List<DownloadEntry> entries = AryDownloads.get(context).store().all();
+        List<DownloadEntry> entries;
+        try {
+            entries = AryDownloads.get(context).store().all();
+        } catch (Throwable t) {
+            // Never let a failure in the download stack take down the tab.
+            Logger.e("Could not load downloads", t);
+            emptyLabel.setText("Downloads unavailable");
+            emptyLabel.setVisibility(View.VISIBLE);
+            return;
+        }
         adapter.submit(entries);
         emptyLabel.setVisibility(entries.isEmpty() ? View.VISIBLE : View.GONE);
     }
