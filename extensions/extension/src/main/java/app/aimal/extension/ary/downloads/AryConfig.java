@@ -40,6 +40,19 @@ public final class AryConfig {
         return prefs.getString(KEY_IMAGE_PATH, "") + imagePath;
     }
 
+    private static final String KEY_DOWNLOAD_HEIGHT = "ary_download_height";
+
+    /** Max rendition height for downloads; chosen by the user per download. */
+    public static int downloadHeight(Context context) {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getInt(KEY_DOWNLOAD_HEIGHT, 720);
+    }
+
+    public static void setDownloadHeight(Context context, int height) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit().putInt(KEY_DOWNLOAD_HEIGHT, height).apply();
+    }
+
     /** Full Widevine licence endpoint, or null when the app has not configured one. */
     public static String widevineLicenseUrl(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);

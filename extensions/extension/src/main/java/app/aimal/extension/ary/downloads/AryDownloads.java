@@ -14,11 +14,14 @@ import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.datasource.HttpDataSource;
 import androidx.media3.datasource.cache.CacheDataSource;
+import androidx.media3.datasource.cache.CacheKeyFactory;
 import androidx.media3.datasource.cache.NoOpCacheEvictor;
 import androidx.media3.datasource.cache.SimpleCache;
 import androidx.media3.exoplayer.drm.DrmSessionManager;
 import androidx.media3.exoplayer.offline.Download;
 import androidx.media3.exoplayer.offline.DownloadHelper;
+import androidx.media3.exoplayer.offline.DefaultDownloadIndex;
+import androidx.media3.exoplayer.offline.DefaultDownloaderFactory;
 import androidx.media3.exoplayer.offline.DownloadManager;
 import androidx.media3.exoplayer.offline.DownloadRequest;
 import androidx.media3.exoplayer.offline.DownloadService;
@@ -37,6 +40,13 @@ import java.util.concurrent.Executors;
  * survive backgrounding) and by the player, which reads from the same cache.
  */
 public final class AryDownloads {
+
+    /**
+     * HLS downloads fetch segments through this pool. Media3 parallelises chunk
+     * fetches across it, so 3 threads shared by 2 downloads was the reason
+     * throughput crawled regardless of link speed.
+     */
+    private static final int PARALLEL_CHUNK_THREADS = 12;
 
     /** Cap downloaded renditions so an episode does not pull a full 1080p ladder. */
     private static final int MAX_DOWNLOAD_HEIGHT = 720;
@@ -65,13 +75,24 @@ public final class AryDownloads {
         File downloadDirectory = new File(this.context.getFilesDir(), "ary_offline");
 
         this.cache = new SimpleCache(downloadDirectory, new NoOpCacheEvictor(), databaseProvider);
+
+        // The downloader factory is built by hand rather than using the
+        // DownloadManager convenience constructor, because that one creates its
+        // own CacheDataSource.Factory internally and gives no way to install
+        // STABLE_KEY_FACTORY. Download and playback must agree on cache keys or
+        // every lookup misses.
+        CacheDataSource.Factory downloadCacheFactory = new CacheDataSource.Factory()
+                .setCache(cache)
+                .setUpstreamDataSourceFactory(httpDataSourceFactory)
+                .setCacheKeyFactory(STABLE_KEY_FACTORY);
+
         this.downloadManager = new DownloadManager(
                 this.context,
-                databaseProvider,
-                cache,
-                httpDataSourceFactory,
-                Executors.newFixedThreadPool(3));
-        this.downloadManager.setMaxParallelDownloads(2);
+                new DefaultDownloadIndex(databaseProvider),
+                new DefaultDownloaderFactory(
+                        downloadCacheFactory,
+                        Executors.newFixedThreadPool(PARALLEL_CHUNK_THREADS)));
+        this.downloadManager.setMaxParallelDownloads(3);
         this.downloadManager.addListener(new ProgressListener());
     }
 
@@ -120,6 +141,9 @@ public final class AryDownloads {
             return new CacheDataSource.Factory()
                     .setCache(get(context).cache)
                     .setUpstreamDataSourceFactory(upstream)
+                    // Must match the factory the downloader used, or playback
+                    // computes different keys and silently streams instead.
+                    .setCacheKeyFactory(STABLE_KEY_FACTORY)
                     .setCacheWriteDataSinkFactory(null)
                     .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR);
         } catch (Throwable t) {
@@ -127,6 +151,25 @@ public final class AryDownloads {
             return upstream;
         }
     }
+
+    /**
+     * Cache key that ignores the query string.
+     *
+     * ARY serves media from a CDN that signs URLs with expiring tokens, so the
+     * same segment has a different query every time it is requested. Keying on
+     * the full URI meant the key written at download time never matched the key
+     * looked up at playback time, and the player fell through to the network -
+     * which is why a "downloaded" episode still streamed and could switch to
+     * 1080p instantly.
+     */
+    static final CacheKeyFactory STABLE_KEY_FACTORY = dataSpec -> {
+        if (dataSpec.key != null) {
+            return dataSpec.key;
+        }
+        Uri uri = dataSpec.uri;
+        String path = uri.getScheme() + "://" + uri.getAuthority() + uri.getPath();
+        return path;
+    };
 
     /** True once the episode's media is fully present in the cache. */
     public boolean isDownloaded(String id) {
@@ -162,7 +205,7 @@ public final class AryDownloads {
                 .build();
 
         TrackSelectionParameters parameters = new TrackSelectionParameters.Builder(context)
-                .setMaxVideoSize(Integer.MAX_VALUE, MAX_DOWNLOAD_HEIGHT)
+                .setMaxVideoSize(Integer.MAX_VALUE, AryConfig.downloadHeight(context))
                 .build();
 
         // The (Context, MediaItem, ...) overload takes a boolean, not track

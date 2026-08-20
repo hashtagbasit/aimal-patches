@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,6 +35,21 @@ public final class DownloadsFragment extends Fragment {
 
     private DownloadsAdapter adapter;
     private TextView emptyLabel;
+
+    /**
+     * DownloadManager reports progress on its own thread and the store is only
+     * a JSON snapshot, so the tab polls while visible. Without this a download
+     * sat at "Queued 0%" until the fragment was left and re-entered.
+     */
+    private static final long REFRESH_INTERVAL_MS = 1000L;
+    private final Handler refreshHandler = new Handler(Looper.getMainLooper());
+    private final Runnable refreshTick = new Runnable() {
+        @Override
+        public void run() {
+            refresh();
+            refreshHandler.postDelayed(this, REFRESH_INTERVAL_MS);
+        }
+    };
 
     @Nullable
     @Override
@@ -79,7 +96,15 @@ public final class DownloadsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        refresh();
+        refreshHandler.removeCallbacks(refreshTick);
+        refreshHandler.post(refreshTick);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Stop polling when hidden so the tab costs nothing in the background.
+        refreshHandler.removeCallbacks(refreshTick);
     }
 
     /** Re-reads the index so progress made while the tab was hidden shows up. */
