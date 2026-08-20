@@ -2,13 +2,10 @@ package app.aimal.extension.ary.downloads;
 
 import android.content.Context;
 import android.net.Uri;
-import android.util.Base64;
 
 import androidx.media3.common.C;
-import androidx.media3.common.Format;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MimeTypes;
-import androidx.media3.common.TrackGroup;
 import androidx.media3.common.TrackSelectionParameters;
 import androidx.media3.common.util.Util;
 import androidx.media3.database.DatabaseProvider;
@@ -19,15 +16,12 @@ import androidx.media3.datasource.HttpDataSource;
 import androidx.media3.datasource.cache.CacheDataSource;
 import androidx.media3.datasource.cache.NoOpCacheEvictor;
 import androidx.media3.datasource.cache.SimpleCache;
-import androidx.media3.exoplayer.drm.DrmSessionEventListener;
 import androidx.media3.exoplayer.drm.DrmSessionManager;
-import androidx.media3.exoplayer.drm.OfflineLicenseHelper;
 import androidx.media3.exoplayer.offline.Download;
 import androidx.media3.exoplayer.offline.DownloadHelper;
 import androidx.media3.exoplayer.offline.DownloadManager;
 import androidx.media3.exoplayer.offline.DownloadRequest;
 import androidx.media3.exoplayer.offline.DownloadService;
-import androidx.media3.exoplayer.source.TrackGroupArray;
 
 import java.io.File;
 import java.io.IOException;
@@ -157,9 +151,8 @@ public final class AryDownloads {
     }
 
     /**
-     * Resolves renditions with {@link DownloadHelper}, acquires an offline
-     * Widevine licence when the episode is DRM protected, then hands a
-     * {@link DownloadRequest} to the manager.
+     * Resolves renditions with {@link DownloadHelper}, then hands a
+     * {@link DownloadRequest} to the manager. DRM-protected items are skipped.
      */
     private void prepare(final DownloadEntry entry) {
         MediaItem mediaItem = new MediaItem.Builder()
@@ -186,24 +179,19 @@ public final class AryDownloads {
             @Override
             public void onPrepared(DownloadHelper downloadHelper, boolean isDrmProtected) {
                 try {
-                    byte[] keySetId = null;
-                    if (entry.drmEnabled) {
-                        keySetId = acquireOfflineLicense(downloadHelper);
-                        if (keySetId == null) {
-                            // The licence server refused a persistable licence.
-                            // Mark it and stop - never attempt to strip the DRM.
-                            markUnavailableOffline(entry);
-                            return;
-                        }
-                        entry.offlineLicenseKeySetId =
-                                Base64.encodeToString(keySetId, Base64.NO_WRAP);
+                    // DRM-protected episodes are not downloaded. The sanctioned
+                    // offline path needs OfflineLicenseHelper, which R8 stripped
+                    // from ARY Plus because the stock app has no offline feature -
+                    // referencing it here made this whole class fail to load with
+                    // NoClassDefFoundError. ARY's catalogue is DRM-free in
+                    // practice, so such episodes are simply marked unavailable.
+                    if (entry.drmEnabled || isDrmProtected) {
+                        markUnavailableOffline(entry);
+                        return;
                     }
 
                     DownloadRequest request = downloadHelper.getDownloadRequest(
                             entry.id, Util.getUtf8Bytes(entry.title));
-                    if (keySetId != null) {
-                        request = request.copyWithKeySetId(keySetId);
-                    }
 
                     entry.state = DownloadEntry.STATE_RUNNING;
                     store.put(entry);
@@ -228,61 +216,6 @@ public final class AryDownloads {
                 downloadHelper.release();
             }
         });
-    }
-
-    /**
-     * Requests a persistable offline licence from ARY's own Widevine server.
-     *
-     * This is the sanctioned ExoPlayer offline path: the media stays encrypted
-     * and playback still requires a valid licence. Returns null when the server
-     * declines to issue one, in which case the episode is simply not offered
-     * offline.
-     */
-    private byte[] acquireOfflineLicense(DownloadHelper helper) {
-        OfflineLicenseHelper licenseHelper = null;
-        try {
-            Format format = firstDrmFormat(helper);
-            if (format == null) {
-                Logger.d("No DRM-initialised format found; nothing to licence");
-                return null;
-            }
-
-            String licenseUri = AryConfig.widevineLicenseUrl(context);
-            if (licenseUri == null || licenseUri.isEmpty()) {
-                Logger.d("No licence server configured in app preferences");
-                return null;
-            }
-
-            licenseHelper = OfflineLicenseHelper.newWidevineInstance(
-                    licenseUri,
-                    httpDataSourceFactory,
-                    new DrmSessionEventListener.EventDispatcher());
-            return licenseHelper.downloadLicense(format);
-        } catch (Exception e) {
-            Logger.e("Licence server did not issue an offline licence", e);
-            return null;
-        } finally {
-            if (licenseHelper != null) {
-                licenseHelper.release();
-            }
-        }
-    }
-
-    /** First format carrying DrmInitData across the prepared periods. */
-    private Format firstDrmFormat(DownloadHelper helper) {
-        for (int period = 0; period < helper.getPeriodCount(); period++) {
-            TrackGroupArray groups = helper.getTrackGroups(period);
-            for (int i = 0; i < groups.length; i++) {
-                TrackGroup group = groups.get(i);
-                for (int j = 0; j < group.length; j++) {
-                    Format format = group.getFormat(j);
-                    if (format.drmInitData != null) {
-                        return format;
-                    }
-                }
-            }
-        }
-        return null;
     }
 
     private void markUnavailableOffline(DownloadEntry entry) {
