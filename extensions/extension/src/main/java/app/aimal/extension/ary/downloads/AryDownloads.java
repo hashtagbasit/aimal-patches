@@ -20,6 +20,7 @@ import androidx.media3.datasource.cache.CacheDataSource;
 import androidx.media3.datasource.cache.NoOpCacheEvictor;
 import androidx.media3.datasource.cache.SimpleCache;
 import androidx.media3.exoplayer.drm.DrmSessionEventListener;
+import androidx.media3.exoplayer.drm.DrmSessionManager;
 import androidx.media3.exoplayer.drm.OfflineLicenseHelper;
 import androidx.media3.exoplayer.offline.Download;
 import androidx.media3.exoplayer.offline.DownloadHelper;
@@ -170,12 +171,20 @@ public final class AryDownloads {
                 .setMaxVideoSize(Integer.MAX_VALUE, MAX_DOWNLOAD_HEIGHT)
                 .build();
 
+        // The (Context, MediaItem, ...) overload takes a boolean, not track
+        // selection parameters. To pass parameters the MediaItem-first overload
+        // is required; the null DrmSessionManager is cast to disambiguate it
+        // from the sibling overload whose last argument is a boolean.
         DownloadHelper helper = DownloadHelper.forMediaItem(
-                context, mediaItem, null, httpDataSourceFactory, parameters);
+                mediaItem,
+                parameters,
+                /* renderersFactory= */ null,
+                httpDataSourceFactory,
+                /* drmSessionManager= */ (DrmSessionManager) null);
 
         helper.prepare(new DownloadHelper.Callback() {
             @Override
-            public void onPrepared(DownloadHelper downloadHelper) {
+            public void onPrepared(DownloadHelper downloadHelper, boolean isDrmProtected) {
                 try {
                     byte[] keySetId = null;
                     if (entry.drmEnabled) {
