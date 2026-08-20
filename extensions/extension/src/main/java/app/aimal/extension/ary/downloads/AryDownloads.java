@@ -22,6 +22,7 @@ import androidx.media3.exoplayer.offline.DownloadHelper;
 import androidx.media3.exoplayer.offline.DownloadManager;
 import androidx.media3.exoplayer.offline.DownloadRequest;
 import androidx.media3.exoplayer.offline.DownloadService;
+import androidx.media3.exoplayer.scheduler.Requirements;
 
 import java.io.File;
 import java.io.IOException;
@@ -235,8 +236,52 @@ public final class AryDownloads {
         }
     }
 
-    /** Mirrors DownloadManager state back into the JSON index for the tab. */
+    /**
+     * Mirrors DownloadManager state back into the JSON index for the tab.
+     *
+     * EVERY method of DownloadManager.Listener is overridden deliberately, even
+     * the ones with empty bodies. The interface declares Java 8 default methods,
+     * and any method left un-overridden dispatches through the desugared
+     * companion class DownloadManager$Listener$-CC. That class is not bundled
+     * here (media3 is compileOnly) and R8 dropped it from the host app, which
+     * previously crashed with:
+     *
+     *   NoClassDefFoundError: Landroidx/media3/exoplayer/offline/DownloadManager$Listener$-CC;
+     *     at AryDownloads$ProgressListener.onInitialized
+     *
+     * These callbacks arrive on DownloadManager's own Handler, so the crash
+     * lands on the main looper outside any caller's try/catch.
+     */
     private final class ProgressListener implements DownloadManager.Listener {
+
+        @Override
+        public void onInitialized(DownloadManager manager) {
+            // Intentionally empty - see class comment.
+        }
+
+        @Override
+        public void onDownloadsPausedChanged(DownloadManager manager, boolean downloadsPaused) {
+        }
+
+        @Override
+        public void onDownloadRemoved(DownloadManager manager, Download download) {
+            store.remove(download.request.id);
+        }
+
+        @Override
+        public void onIdle(DownloadManager manager) {
+        }
+
+        @Override
+        public void onRequirementsStateChanged(
+                DownloadManager manager, Requirements requirements, int notMetRequirements) {
+        }
+
+        @Override
+        public void onWaitingForRequirementsChanged(
+                DownloadManager manager, boolean waitingForRequirements) {
+        }
+
         @Override
         public void onDownloadChanged(DownloadManager manager, Download download, Exception e) {
             DownloadEntry entry = store.get(download.request.id);
