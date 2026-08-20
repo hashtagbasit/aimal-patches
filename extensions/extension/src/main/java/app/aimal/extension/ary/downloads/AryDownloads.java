@@ -177,8 +177,29 @@ public final class AryDownloads {
                 /* drmSessionManager= */ (DrmSessionManager) null);
 
         helper.prepare(new DownloadHelper.Callback() {
+
+            /**
+             * ARY Plus bundles an older media3 for its offline classes than the
+             * 1.8.0 this extension compiles against, and the runtime dispatches
+             * the single-argument callback:
+             *
+             *   AbstractMethodError: abstract method
+             *     "void DownloadHelper$Callback.onPrepared(DownloadHelper)"
+             *
+             * Deliberately no @Override - this signature does not exist in
+             * 1.8.0, so annotating it would fail the build. Both arities are
+             * implemented so the class satisfies either runtime.
+             */
+            public void onPrepared(DownloadHelper downloadHelper) {
+                handlePrepared(downloadHelper, false);
+            }
+
             @Override
             public void onPrepared(DownloadHelper downloadHelper, boolean isDrmProtected) {
+                handlePrepared(downloadHelper, isDrmProtected);
+            }
+
+            private void handlePrepared(DownloadHelper downloadHelper, boolean isDrmProtected) {
                 try {
                     // DRM-protected episodes are not downloaded. The sanctioned
                     // offline path needs OfflineLicenseHelper, which R8 stripped
@@ -280,6 +301,15 @@ public final class AryDownloads {
         @Override
         public void onWaitingForRequirementsChanged(
                 DownloadManager manager, boolean waitingForRequirements) {
+        }
+
+        /**
+         * Older media3 declares this without the trailing Exception. Same
+         * version-skew reason as DownloadHelper.Callback.onPrepared above, so no
+         * @Override here either - it is the runtime that may call this form.
+         */
+        public void onDownloadChanged(DownloadManager manager, Download download) {
+            onDownloadChanged(manager, download, null);
         }
 
         @Override
