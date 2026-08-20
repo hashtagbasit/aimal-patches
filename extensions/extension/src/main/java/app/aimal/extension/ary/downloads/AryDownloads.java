@@ -138,6 +138,9 @@ public final class AryDownloads {
      */
     public static DataSource.Factory wrap(DataSource.Factory upstream, Context context) {
         try {
+            // Logged unconditionally: silence here is the signal that the patch
+            // hooked a DataSource.Factory the player does not actually use.
+            Logger.d("wrap() called - attaching offline cache to " + upstream);
             return new CacheDataSource.Factory()
                     .setCache(get(context).cache)
                     .setUpstreamDataSourceFactory(upstream)
