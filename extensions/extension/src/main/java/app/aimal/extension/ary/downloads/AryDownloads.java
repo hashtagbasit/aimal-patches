@@ -1,0 +1,323 @@
+package app.aimal.extension.ary.downloads;
+
+import android.content.Context;
+import android.net.Uri;
+import android.util.Base64;
+
+import androidx.media3.common.C;
+import androidx.media3.common.Format;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.MimeTypes;
+import androidx.media3.common.TrackGroup;
+import androidx.media3.common.TrackSelectionParameters;
+import androidx.media3.common.util.Util;
+import androidx.media3.database.DatabaseProvider;
+import androidx.media3.database.StandaloneDatabaseProvider;
+import androidx.media3.datasource.DataSource;
+import androidx.media3.datasource.DefaultHttpDataSource;
+import androidx.media3.datasource.HttpDataSource;
+import androidx.media3.datasource.cache.CacheDataSource;
+import androidx.media3.datasource.cache.NoOpCacheEvictor;
+import androidx.media3.datasource.cache.SimpleCache;
+import androidx.media3.exoplayer.drm.DrmSessionEventListener;
+import androidx.media3.exoplayer.drm.OfflineLicenseHelper;
+import androidx.media3.exoplayer.offline.Download;
+import androidx.media3.exoplayer.offline.DownloadHelper;
+import androidx.media3.exoplayer.offline.DownloadManager;
+import androidx.media3.exoplayer.offline.DownloadRequest;
+import androidx.media3.exoplayer.offline.DownloadService;
+import androidx.media3.exoplayer.source.TrackGroupArray;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.Executors;
+
+/**
+ * Owns the offline media cache and download queue for the patched app.
+ *
+ * Holds the single {@link DownloadManager}/{@link SimpleCache} pair shared by
+ * {@link AryDownloadService} (which runs transfers in the foreground so they
+ * survive backgrounding) and by the player, which reads from the same cache.
+ */
+public final class AryDownloads {
+
+    /** Cap downloaded renditions so an episode does not pull a full 1080p ladder. */
+    private static final int MAX_DOWNLOAD_HEIGHT = 720;
+
+    /**
+     * Marks a player launch as coming from the Downloads tab. The player patch
+     * uses it to skip ad loading for content the user already has offline.
+     */
+    public static final String EXTRA_OFFLINE = "ary_offline_playback";
+
+    private static AryDownloads instance;
+
+    private final Context context;
+    private final SimpleCache cache;
+    private final DownloadManager downloadManager;
+    private final HttpDataSource.Factory httpDataSourceFactory;
+    private final DownloadStore store;
+
+    private AryDownloads(Context context) {
+        this.context = context.getApplicationContext();
+        this.store = new DownloadStore(this.context);
+        this.httpDataSourceFactory = new DefaultHttpDataSource.Factory()
+                .setAllowCrossProtocolRedirects(true);
+
+        DatabaseProvider databaseProvider = new StandaloneDatabaseProvider(this.context);
+        File downloadDirectory = new File(this.context.getFilesDir(), "ary_offline");
+
+        this.cache = new SimpleCache(downloadDirectory, new NoOpCacheEvictor(), databaseProvider);
+        this.downloadManager = new DownloadManager(
+                this.context,
+                databaseProvider,
+                cache,
+                httpDataSourceFactory,
+                Executors.newFixedThreadPool(3));
+        this.downloadManager.setMaxParallelDownloads(2);
+        this.downloadManager.addListener(new ProgressListener());
+    }
+
+    public static synchronized AryDownloads get(Context context) {
+        if (instance == null) {
+            instance = new AryDownloads(context);
+        }
+        return instance;
+    }
+
+    public DownloadStore store() {
+        return store;
+    }
+
+    /** Exposed for {@link AryDownloadService}, which must return this instance. */
+    DownloadManager downloadManager() {
+        return downloadManager;
+    }
+
+    /**
+     * Data source factory that reads from the offline cache first and falls back
+     * to the network. The player patch swaps the app's factory for this one so a
+     * downloaded episode plays back through the app's own PlayerView.
+     */
+    public DataSource.Factory offlineFirstDataSourceFactory() {
+        return new CacheDataSource.Factory()
+                .setCache(cache)
+                .setUpstreamDataSourceFactory(httpDataSourceFactory)
+                // Read-only: streaming a non-downloaded episode must not silently
+                // fill the offline cache.
+                .setCacheWriteDataSinkFactory(null)
+                .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR);
+    }
+
+    /**
+     * Wraps the player's own DataSource.Factory with the offline cache.
+     *
+     * Injected where CdnPlayer/PlayerActivity build their
+     * {@code DefaultDataSource.Factory}, so a downloaded episode is served from
+     * disk while anything else falls through to the original upstream factory
+     * untouched. Returns the upstream unchanged if the cache cannot be opened -
+     * playback must never break because downloads are unavailable.
+     */
+    public static DataSource.Factory wrap(DataSource.Factory upstream, Context context) {
+        try {
+            return new CacheDataSource.Factory()
+                    .setCache(get(context).cache)
+                    .setUpstreamDataSourceFactory(upstream)
+                    .setCacheWriteDataSinkFactory(null)
+                    .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR);
+        } catch (Throwable t) {
+            Logger.e("Could not attach offline cache to player", t);
+            return upstream;
+        }
+    }
+
+    /** True once the episode's media is fully present in the cache. */
+    public boolean isDownloaded(String id) {
+        DownloadEntry entry = store.get(id);
+        return entry != null && entry.state == DownloadEntry.STATE_COMPLETED;
+    }
+
+    /** Queue one episode. Safe to call repeatedly - known ids are ignored. */
+    public void enqueue(DownloadEntry entry) {
+        if (store.contains(entry.id)) {
+            Logger.d("Already queued or downloaded: " + entry.title);
+            return;
+        }
+        store.put(entry);
+        prepare(entry);
+    }
+
+    /** Queue every episode of a show; backs the "Download all episodes" action. */
+    public void enqueueAll(List<DownloadEntry> episodes) {
+        for (DownloadEntry entry : episodes) {
+            enqueue(entry);
+        }
+    }
+
+    /**
+     * Resolves renditions with {@link DownloadHelper}, acquires an offline
+     * Widevine licence when the episode is DRM protected, then hands a
+     * {@link DownloadRequest} to the manager.
+     */
+    private void prepare(final DownloadEntry entry) {
+        MediaItem mediaItem = new MediaItem.Builder()
+                .setUri(Uri.parse(entry.sourceUrl))
+                .setMimeType(inferMimeType(entry.sourceUrl))
+                .build();
+
+        TrackSelectionParameters parameters = new TrackSelectionParameters.Builder(context)
+                .setMaxVideoSize(Integer.MAX_VALUE, MAX_DOWNLOAD_HEIGHT)
+                .build();
+
+        DownloadHelper helper = DownloadHelper.forMediaItem(
+                context, mediaItem, null, httpDataSourceFactory, parameters);
+
+        helper.prepare(new DownloadHelper.Callback() {
+            @Override
+            public void onPrepared(DownloadHelper downloadHelper) {
+                try {
+                    byte[] keySetId = null;
+                    if (entry.drmEnabled) {
+                        keySetId = acquireOfflineLicense(downloadHelper);
+                        if (keySetId == null) {
+                            // The licence server refused a persistable licence.
+                            // Mark it and stop - never attempt to strip the DRM.
+                            markUnavailableOffline(entry);
+                            return;
+                        }
+                        entry.offlineLicenseKeySetId =
+                                Base64.encodeToString(keySetId, Base64.NO_WRAP);
+                    }
+
+                    DownloadRequest request = downloadHelper.getDownloadRequest(
+                            entry.id, Util.getUtf8Bytes(entry.title));
+                    if (keySetId != null) {
+                        request = request.copyWithKeySetId(keySetId);
+                    }
+
+                    entry.state = DownloadEntry.STATE_RUNNING;
+                    store.put(entry);
+                    // Hand off to the foreground service so the transfer keeps
+                    // running once the app is backgrounded.
+                    DownloadService.sendAddDownload(
+                            context, AryDownloadService.class, request, /* foreground= */ true);
+                } catch (Exception e) {
+                    Logger.e("Could not start download for " + entry.title, e);
+                    entry.state = DownloadEntry.STATE_FAILED;
+                    store.put(entry);
+                } finally {
+                    downloadHelper.release();
+                }
+            }
+
+            @Override
+            public void onPrepareError(DownloadHelper downloadHelper, IOException e) {
+                Logger.e("Could not resolve renditions for " + entry.title, e);
+                entry.state = DownloadEntry.STATE_FAILED;
+                store.put(entry);
+                downloadHelper.release();
+            }
+        });
+    }
+
+    /**
+     * Requests a persistable offline licence from ARY's own Widevine server.
+     *
+     * This is the sanctioned ExoPlayer offline path: the media stays encrypted
+     * and playback still requires a valid licence. Returns null when the server
+     * declines to issue one, in which case the episode is simply not offered
+     * offline.
+     */
+    private byte[] acquireOfflineLicense(DownloadHelper helper) {
+        OfflineLicenseHelper licenseHelper = null;
+        try {
+            Format format = firstDrmFormat(helper);
+            if (format == null) {
+                Logger.d("No DRM-initialised format found; nothing to licence");
+                return null;
+            }
+
+            String licenseUri = AryConfig.widevineLicenseUrl(context);
+            if (licenseUri == null || licenseUri.isEmpty()) {
+                Logger.d("No licence server configured in app preferences");
+                return null;
+            }
+
+            licenseHelper = OfflineLicenseHelper.newWidevineInstance(
+                    licenseUri,
+                    httpDataSourceFactory,
+                    new DrmSessionEventListener.EventDispatcher());
+            return licenseHelper.downloadLicense(format);
+        } catch (Exception e) {
+            Logger.e("Licence server did not issue an offline licence", e);
+            return null;
+        } finally {
+            if (licenseHelper != null) {
+                licenseHelper.release();
+            }
+        }
+    }
+
+    /** First format carrying DrmInitData across the prepared periods. */
+    private Format firstDrmFormat(DownloadHelper helper) {
+        for (int period = 0; period < helper.getPeriodCount(); period++) {
+            TrackGroupArray groups = helper.getTrackGroups(period);
+            for (int i = 0; i < groups.length; i++) {
+                TrackGroup group = groups.get(i);
+                for (int j = 0; j < group.length; j++) {
+                    Format format = group.getFormat(j);
+                    if (format.drmInitData != null) {
+                        return format;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private void markUnavailableOffline(DownloadEntry entry) {
+        entry.state = DownloadEntry.STATE_UNAVAILABLE_OFFLINE;
+        store.put(entry);
+        Logger.d("Not available offline (DRM licence refused): " + entry.title);
+    }
+
+    private static String inferMimeType(String url) {
+        switch (Util.inferContentType(Uri.parse(url))) {
+            case C.CONTENT_TYPE_HLS:
+                return MimeTypes.APPLICATION_M3U8;
+            case C.CONTENT_TYPE_DASH:
+                return MimeTypes.APPLICATION_MPD;
+            default:
+                return MimeTypes.VIDEO_MP4;
+        }
+    }
+
+    /** Mirrors DownloadManager state back into the JSON index for the tab. */
+    private final class ProgressListener implements DownloadManager.Listener {
+        @Override
+        public void onDownloadChanged(DownloadManager manager, Download download, Exception e) {
+            DownloadEntry entry = store.get(download.request.id);
+            if (entry == null) {
+                return;
+            }
+
+            entry.progress = download.getPercentDownloaded();
+            switch (download.state) {
+                case Download.STATE_COMPLETED:
+                    entry.state = DownloadEntry.STATE_COMPLETED;
+                    entry.progress = 100f;
+                    break;
+                case Download.STATE_FAILED:
+                    entry.state = DownloadEntry.STATE_FAILED;
+                    break;
+                case Download.STATE_DOWNLOADING:
+                    entry.state = DownloadEntry.STATE_RUNNING;
+                    break;
+                default:
+                    break;
+            }
+            store.put(entry);
+        }
+    }
+}
