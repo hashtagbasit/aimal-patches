@@ -3,6 +3,7 @@ package app.aimal.patches.streaming
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import com.android.tools.smali.dexlib2.Opcode
 
 private const val CONTROLS = "$EXTENSION_STREAMING/Controls;"
 private const val PLAYER_BRIDGE = "$EXTENSION_STREAMING/PlayerBridge;"
@@ -66,19 +67,47 @@ val playbackControlsPatch = bytecodePatch(
                     "has probably changed its media stack."
             )
 
+        var hooked = 0
+
         playerConstructors.forEach { match ->
             val method = match.method
 
-            // Must not be instruction 0: a constructor has to reach its super
-            // constructor before `this` is usable, and passing a half-built
-            // object out fails dex verification. Inserting before the trailing
-            // return-void puts the call after super() and after every field
-            // assignment.
-            val returnIndex = method.implementation!!.instructions.count() - 1
+            // The call has to land on the constructor's normal exit path.
+            //
+            // Not instruction 0: a constructor must reach its super
+            // constructor before `this` is usable, and handing a half-built
+            // object out fails dex verification.
+            //
+            // And not the last instruction either, which is what the first
+            // version of this patch did. media3's ExoPlayerImpl constructor
+            // ends with a fill-array-data payload - dex stores those after the
+            // code - and wraps its body in try/finally, so the tail of the
+            // method is a payload block and a catchall handler. Neither runs
+            // on a successful construction, which is why that build captured
+            // no player at all while every other hook worked.
+            //
+            // Every return-void is hooked rather than just the first, so an
+            // early exit path cannot slip through.
+            val returnIndices = method.implementation!!.instructions
+                .withIndex()
+                .filter { (_, instruction) -> instruction.opcode == Opcode.RETURN_VOID }
+                .map { (index, _) -> index }
 
-            method.addInstruction(
-                returnIndex,
-                "invoke-static/range { p0 .. p0 }, $PLAYER_BRIDGE->onPlayerCreated(Ljava/lang/Object;)V"
+            // Reversed so the earlier indices stay valid as code is inserted.
+            returnIndices.asReversed().forEach { index ->
+                method.addInstruction(
+                    index,
+                    "invoke-static/range { p0 .. p0 }, " +
+                        "$PLAYER_BRIDGE->onPlayerCreated(Ljava/lang/Object;)V"
+                )
+                hooked++
+            }
+        }
+
+        if (hooked == 0) {
+            throw PatchException(
+                "Found ${playerConstructors.size} ExoPlayer constructor(s) but none had a " +
+                    "return-void to hook, so the speed control would silently do nothing."
             )
         }
     }
