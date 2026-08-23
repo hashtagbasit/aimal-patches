@@ -7,37 +7,33 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 
 /**
- * Reshapes the video.
+ * Reshapes the video. Two modes: leave it alone, or stretch it to fill the
+ * screen.
  *
  * Two mechanisms, preferred in this order:
  *
  *  1. media3's own {@code AspectRatioFrameLayout.setResizeMode(int)}, reached
  *     by reflection on the first ancestor of the video surface that declares
  *     it. Both HBO Max and Disney+ keep that method name, and letting media3
- *     do the resize means the app's own measurement stays consistent - this is
- *     the same approach the Crunchyroll patch in this bundle uses.
+ *     do the resize keeps the app's own measurement consistent - the same
+ *     approach the Crunchyroll patch in this bundle uses.
  *
- *  2. A view transform, for the fixed zoom steps and as a fallback when no
- *     AspectRatioFrameLayout is in the tree. media3 letterboxes *outside* the
- *     video surface, so the transform goes on the outermost letterboxed
- *     ancestor - scaling the surface alone would just be clipped by its
- *     container - and clipping is lifted above it.
+ *  2. A view transform, as a fallback when no AspectRatioFrameLayout is in the
+ *     tree. media3 letterboxes *outside* the video surface, so the transform
+ *     goes on the outermost letterboxed ancestor - scaling the surface alone
+ *     would just be clipped by its container - and clipping is lifted above it.
  *
  * Neither touches the frames, so DRM-protected output is unaffected.
  */
 final class AspectRatio {
     static final int FIT = 0;
     static final int STRETCH = 1;
-    static final int CROP = 2;
-    static final int ZOOM_115 = 3;
-    static final int ZOOM_130 = 4;
 
-    private static final int MODE_COUNT = 5;
+    private static final int MODE_COUNT = 2;
 
     /** androidx.media3.ui.AspectRatioFrameLayout resize modes. */
     private static final int RESIZE_FIT = 0;
     private static final int RESIZE_FILL = 3;
-    private static final int RESIZE_ZOOM = 4;
 
     /** Pixels of slack before a view counts as letterboxed against its root. */
     private static final int LETTERBOX_TOLERANCE = 2;
@@ -53,19 +49,7 @@ final class AspectRatio {
     }
 
     static String label(int mode) {
-        switch (mode) {
-            case STRETCH:
-                return "STRETCH";
-            case CROP:
-                return "CROP";
-            case ZOOM_115:
-                return "ZOOM 1.15";
-            case ZOOM_130:
-                return "ZOOM 1.30";
-            case FIT:
-            default:
-                return "FIT";
-        }
+        return mode == STRETCH ? "STRETCH" : "FIT";
     }
 
     /**
@@ -80,10 +64,9 @@ final class AspectRatio {
             View resizer = findResizeHost(video);
 
             if (resizer != null) {
-                setResizeMode(resizer, resizeModeFor(mode));
-                // The zoom steps sit on top of whatever media3 just did.
-                float zoom = zoomFactor(mode);
-                transform(video, zoom, zoom);
+                setResizeMode(resizer, mode == STRETCH ? RESIZE_FILL : RESIZE_FIT);
+                // Drop any transform left over from the fallback path.
+                transform(video, 1f, 1f);
             } else {
                 emulate(video, mode);
             }
@@ -93,28 +76,6 @@ final class AspectRatio {
     }
 
     // media3 path ------------------------------------------------------------
-
-    private static int resizeModeFor(int mode) {
-        switch (mode) {
-            case STRETCH:
-                return RESIZE_FILL;
-            case CROP:
-                return RESIZE_ZOOM;
-            default:
-                return RESIZE_FIT;
-        }
-    }
-
-    private static float zoomFactor(int mode) {
-        switch (mode) {
-            case ZOOM_115:
-                return 1.15f;
-            case ZOOM_130:
-                return 1.30f;
-            default:
-                return 1f;
-        }
-    }
 
     /**
      * The nearest ancestor declaring {@code setResizeMode(int)} - in practice
@@ -152,7 +113,7 @@ final class AspectRatio {
         }
     }
 
-    // Transform path ---------------------------------------------------------
+    // Transform fallback -----------------------------------------------------
 
     /**
      * Used when the app has no AspectRatioFrameLayout to drive: works out the
@@ -164,28 +125,19 @@ final class AspectRatio {
 
         View target = letterboxedAncestor(video, root);
 
-        float scaleX = zoomFactor(mode);
-        float scaleY = scaleX;
+        float scaleX = 1f;
+        float scaleY = 1f;
 
-        if (mode == STRETCH || mode == CROP) {
+        if (mode == STRETCH) {
             float targetWidth = target.getWidth();
             float targetHeight = target.getHeight();
             float rootWidth = root.getWidth();
             float rootHeight = root.getHeight();
 
             if (targetWidth > 0 && targetHeight > 0 && rootWidth > 0 && rootHeight > 0) {
-                float ratioX = rootWidth / targetWidth;
-                float ratioY = rootHeight / targetHeight;
-
-                if (mode == STRETCH) {
-                    // Fill both axes exactly, distorting the picture.
-                    scaleX = ratioX;
-                    scaleY = ratioY;
-                } else {
-                    // Fill the screen keeping the picture's shape, cropping
-                    // the overflow.
-                    scaleX = scaleY = Math.max(ratioX, ratioY);
-                }
+                // Fill both axes exactly, distorting the picture.
+                scaleX = rootWidth / targetWidth;
+                scaleY = rootHeight / targetHeight;
             }
         }
 
@@ -205,7 +157,7 @@ final class AspectRatio {
         boolean transformed = scaleX != 1f || scaleY != 1f;
         setClippingAbove(target, rootOf(target), !transformed);
 
-        // Scale about the centre so any crop is even on both sides.
+        // Scale about the centre so any overflow is even on both sides.
         target.setPivotX(target.getWidth() / 2f);
         target.setPivotY(target.getHeight() / 2f);
         target.setScaleX(scaleX);

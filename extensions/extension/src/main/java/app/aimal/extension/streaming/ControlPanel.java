@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -12,29 +14,38 @@ import android.view.ViewConfiguration;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * The floating control panel.
  *
- * Built entirely in code from framework views. That is deliberate: adding
- * layouts or drawables would mean a resource patch, which means decoding and
- * rebuilding the resources of a 100 MB+ streaming app on every patch run, and
- * a new set of things to break on each app update. Nothing here needs the
- * app's own resources at all.
+ * Built entirely in code from framework views, so no resource patch is needed
+ * and nothing depends on the app's own resources.
  *
- * Collapsed it is a single pill showing the current speed. Tapping it opens
- * the speed row and the aspect toggle. It can be dragged out of the way by its
- * handle, and its position is remembered.
+ * It gets out of the way on its own: a few seconds after the last interaction
+ * it collapses to a dim pill showing the current speed. Touching the pill
+ * brings it back to full opacity and opens the speed row and aspect toggle.
  */
 @SuppressLint("ViewConstructor")
 final class ControlPanel extends LinearLayout {
     private static final float[] SPEEDS = {1f, 1.25f, 1.5f, 2f};
+
+    /** Time with no interaction before the panel dims and collapses. */
+    private static final long IDLE_MS = 3000;
+    private static final float IDLE_ALPHA = 0.25f;
+
+    /**
+     * Confirms what the speed control actually reached. Flip to false once
+     * speed is known good on both apps.
+     */
+    private static final boolean SHOW_SPEED_TOAST = true;
 
     private static final int COLOR_PANEL = 0xCC101014;
     private static final int COLOR_CHIP = 0x33FFFFFF;
     private static final int COLOR_CHIP_SELECTED = 0xFF2F6FED;
 
     private final int touchSlop;
+    private final Handler idleHandler = new Handler(Looper.getMainLooper());
 
     private TextView collapsedChip;
     private LinearLayout expandedRow;
@@ -47,6 +58,14 @@ final class ControlPanel extends LinearLayout {
     private int downMarginLeft;
     private int downMarginTop;
     private boolean dragging;
+
+    private final Runnable idleAction = new Runnable() {
+        @Override
+        public void run() {
+            setExpanded(false);
+            animate().alpha(IDLE_ALPHA).setDuration(400).start();
+        }
+    };
 
     ControlPanel(Context context) {
         super(context);
@@ -66,6 +85,7 @@ final class ControlPanel extends LinearLayout {
 
         setExpanded(false);
         syncSelection();
+        poke();
     }
 
     FrameLayout.LayoutParams buildLayoutParams() {
@@ -77,6 +97,12 @@ final class ControlPanel extends LinearLayout {
         return params;
     }
 
+    @Override
+    protected void onDetachedFromWindow() {
+        idleHandler.removeCallbacks(idleAction);
+        super.onDetachedFromWindow();
+    }
+
     // View construction -------------------------------------------------------
 
     private TextView buildDragHandle() {
@@ -84,6 +110,7 @@ final class ControlPanel extends LinearLayout {
         handle.setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
+                poke();
                 return handleDrag(event);
             }
         });
@@ -95,6 +122,7 @@ final class ControlPanel extends LinearLayout {
         collapsedChip.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
+                poke();
                 setExpanded(true);
             }
         });
@@ -112,6 +140,7 @@ final class ControlPanel extends LinearLayout {
             view.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    poke();
                     applySpeed(speed);
                 }
             });
@@ -123,7 +152,8 @@ final class ControlPanel extends LinearLayout {
         aspectChip.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                cycleAspect();
+                poke();
+                toggleAspect();
             }
         });
         expandedRow.addView(aspectChip);
@@ -133,6 +163,7 @@ final class ControlPanel extends LinearLayout {
             @Override
             public void onClick(View v) {
                 setExpanded(false);
+                animate().alpha(IDLE_ALPHA).setDuration(200).start();
             }
         });
         expandedRow.addView(close);
@@ -159,6 +190,14 @@ final class ControlPanel extends LinearLayout {
 
     // Behaviour ---------------------------------------------------------------
 
+    /** Wakes the panel and restarts the idle countdown. */
+    private void poke() {
+        idleHandler.removeCallbacks(idleAction);
+        animate().cancel();
+        setAlpha(1f);
+        idleHandler.postDelayed(idleAction, IDLE_MS);
+    }
+
     private void setExpanded(boolean value) {
         collapsedChip.setVisibility(value ? GONE : VISIBLE);
         expandedRow.setVisibility(value ? VISIBLE : GONE);
@@ -169,14 +208,16 @@ final class ControlPanel extends LinearLayout {
         collapsedChip.setText(speedLabel(speed));
         syncSelection();
 
-        if (!PlayerBridge.setSpeed(speed)) {
-            // Stored anyway: the next player created picks it up in
-            // PlayerBridge.onPlayerCreated.
-            Logger.d("Speed stored but no live player");
+        int players = PlayerBridge.setSpeed(speed);
+
+        if (SHOW_SPEED_TOAST) {
+            toast(players > 0
+                    ? speedLabel(speed) + " \u2192 " + players + " player(s)"
+                    : speedLabel(speed) + " \u2014 no player found");
         }
     }
 
-    private void cycleAspect() {
+    private void toggleAspect() {
         int mode = AspectRatio.next(Prefs.aspect());
         Prefs.aspect(mode);
         aspectChip.setText(AspectRatio.label(mode));
@@ -231,6 +272,14 @@ final class ControlPanel extends LinearLayout {
     }
 
     // Helpers -----------------------------------------------------------------
+
+    private void toast(String message) {
+        try {
+            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+        } catch (Throwable ignored) {
+            // A toast is never worth taking the player down for.
+        }
+    }
 
     private static String speedLabel(float speed) {
         return (speed == (int) speed ? String.valueOf((int) speed) : String.valueOf(speed)) + "\u00D7";

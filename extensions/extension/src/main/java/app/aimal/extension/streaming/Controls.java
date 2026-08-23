@@ -3,7 +3,6 @@ package app.aimal.extension.streaming;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -49,9 +48,8 @@ public final class Controls {
             applicationContext = context.getApplicationContext();
             Prefs.init(applicationContext);
 
-            ApplicationInfo info = applicationContext.getApplicationInfo();
-            Logger.verbose = (info.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-            Logger.i("Playback controls initialised for " + info.packageName);
+            Logger.i("Playback controls initialised for "
+                    + applicationContext.getApplicationInfo().packageName);
 
             if (applicationContext instanceof Application) {
                 ((Application) applicationContext).registerActivityLifecycleCallbacks(new Lifecycle());
