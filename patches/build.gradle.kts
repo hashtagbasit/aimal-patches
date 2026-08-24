@@ -18,6 +18,28 @@ kotlin {
     }
 }
 
+// Separate configuration so gson is available at runtime for the
+// generatePatchesList task but never bundled into the patched app.
+val patchListGeneratorClasspath = configurations.create("patchListGeneratorClasspath")
+
 dependencies {
-    implementation(libs.gson)
+    compileOnly(libs.gson)
+    patchListGeneratorClasspath(libs.gson)
+}
+
+tasks {
+    // Called by .releaserc during a release to regenerate patches-list.json.
+    register<JavaExec>("generatePatchesList") {
+        description = "Build patch with patch list"
+
+        dependsOn(build)
+
+        classpath = sourceSets["main"].runtimeClasspath + patchListGeneratorClasspath
+        mainClass.set("util.PatchListGeneratorKt")
+    }
+
+    // Used by gradle-semantic-release-plugin.
+    publish {
+        dependsOn("generatePatchesList")
+    }
 }
