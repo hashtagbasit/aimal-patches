@@ -33,7 +33,7 @@ if "/" not in repo_full:
 owner, repo = repo_full.split("/", 1)
 
 
-with open(json_path) as f:
+with open(json_path, encoding="utf-8") as f:
     data = json.load(f)
 
 
@@ -105,12 +105,17 @@ def versions_table(targets):
     cells = []
     for t in targets:
         ver   = t["version"]
+        if ver is None:
+            continue
         label = f"🧪&nbsp;{ver}" if t.get("isExperimental") else ver
         cells.append(label)
 
+    if not cells:
+        return ""
+
     header = "| " + " | ".join(cells) + " |"
-    sep    = "| " + " | ".join(":---:" for _ in cells) + " |"
-    rows   = [header, sep]
+    sep = "| " + " | ".join(":---:" for _ in cells) + " |"
+    rows = [header, sep]
 
     # Optional description row — only rendered if at least one target has one
     descs = [(t.get("description") or "").replace("\n", "<br>") for t in targets]
@@ -140,9 +145,9 @@ def spoiler(label, count, targets, tbl, expanded=False):
 def build_content(expanded=False):
     """Build the full generated patches section."""
     lines = [
-                f"> **[v{ver}](https://github.com/{owner}/{repo}/releases/tag/v{ver})**"
-                f"&nbsp;&nbsp;•&nbsp;&nbsp;`{branch}`&nbsp;&nbsp;•&nbsp;&nbsp;"
-                f"{total} patches total"
+        f"> **[v{ver}](https://github.com/{owner}/{repo}/releases/tag/v{ver})**"
+        f"&nbsp;&nbsp;•&nbsp;&nbsp;`{branch}`&nbsp;&nbsp;•&nbsp;&nbsp;"
+        f"{total} patches total"
     ]
 
     # One spoiler per app, in the order they appear in the JSON
@@ -207,6 +212,11 @@ expanded = (
 )
 
 generated  = build_content(expanded=expanded)
+
+# Replace template links if present
+readme = readme.replace("https://morphe.software/add-source?github=xyz-user/xyz-patches", f"https://morphe.software/add-source?github={repo_full}")
+readme = readme.replace("https://github.com/xyz-user/xyz-patches", f"https://github.com/{repo_full}")
+
 new_readme = re.sub(
     rf"{START_PATTERN}.*?{re.escape(END_MARKER)}",
     f"{actual_start}\n{generated}\n{END_MARKER}",
