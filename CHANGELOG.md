@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/hashtagbasit/aimal-patches/compare/v1.0.0...v1.0.1) (2026-08-24)
+
+
+### Bug Fixes
+
+* match Crunchyroll speed table by structure, not moved strings ([04a7d4c](https://github.com/hashtagbasit/aimal-patches/commit/04a7d4c2065c3ce7ca6406f69182afb43fe4bc51))
+
 # 1.0.0 (2026-08-24)
 
 
