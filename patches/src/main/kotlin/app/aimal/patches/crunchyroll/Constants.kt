@@ -7,9 +7,14 @@ import app.morphe.patcher.patch.Compatibility
 val CRUNCHYROLL = Compatibility(
     name = "Crunchyroll",
     packageName = "com.crunchyroll.crunchyroid",
-    apkFileType = ApkFileType.APK,
+    // APKMirror ships Crunchyroll as a split bundle.
+    apkFileType = ApkFileType.APKM,
     appIconColor = 0xF47521,
     targets = listOf(
-        AppTarget(version = null),
+        // Last version the patches were verified against.
+        AppTarget(version = "3.117.0"),
+        // The patches match on structure, not version, so newer builds are
+        // expected to work.
+        AppTarget(version = null, isExperimental = true),
     )
 )
