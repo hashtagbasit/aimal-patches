@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/hashtagbasit/aimal-patches/compare/v1.0.1...v1.0.2) (2026-08-24)
+
+
+### Bug Fixes
+
+* make the Crunchyroll aspect toggle appear on 3.117.0 ([672cafe](https://github.com/hashtagbasit/aimal-patches/commit/672cafe273b6ee8d21cdb10b14f80e77521d707f))
+
 ## [1.0.1](https://github.com/hashtagbasit/aimal-patches/compare/v1.0.0...v1.0.1) (2026-08-24)
 
 
