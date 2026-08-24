@@ -1,101 +1,91 @@
-# 👋🧩 Morphe Patches template (to be filled)
+# Aimal Patches
 
-Template repository for Morphe Patches.
+Morphe patches that give three streaming apps the two playback controls they
+ship without: **playback speed** and **aspect ratio**.
 
-## ❓ About
+That is the whole scope. There are no ad, tracker, region or unlock patches
+here, and nothing in this bundle touches DRM, entitlement or licensing.
 
-This is a template to create a new Morphe Patches repository.
-TODO: Update this about section with a brief introduction/summary about this repo and what it offers.
+| App | Package | Built against |
+| --- | --- | --- |
+| Crunchyroll | `com.crunchyroll.crunchyroid` | any recent build |
+| HBO Max | `com.wbd.stream` | 7.9.0.84 |
+| Disney+ | `com.disney.disneyplus` | 26.14.1+rc2-2026.08.20 |
 
-## 🩹 Patches list
+`com.wbd.hbomax` is the Android TV build of HBO Max and is a different app.
+These patches target the phone and tablet builds.
+
+## Install
+
+[**Add this bundle to Morphe Manager**](https://morphe.software/add-source?github=hashtagbasit/aimal-patches)
+
+Or add it by hand: Manager → patch sources → add source →
+`https://github.com/hashtagbasit/aimal-patches`
+
+With Morphe Desktop:
+
+```
+java -jar morphe-desktop-*-all.jar patch -p https://github.com/hashtagbasit/aimal-patches app.apkm
+```
+
+HBO Max and Disney+ are distributed as split bundles (`.apkm`); Manager and
+Desktop merge them for you.
+
+## Patches list
 
 <!-- PATCHES_START EXPANDED -->
 
-feat: add ARY Plus patches (downloads, Downloads tab, 1.25x speed)
+<!-- Do not modify this section by hand. The patch list is generated when release.yml creates a new release. -->
 
-<!-- Do not modify this section by hand. The patch list is generated when release.yml creates a new release.
-     
-     If you wish for the patches list to be collapsed, then remove the word 'EXPANDED' from the comment tag above.
-
-     If you wish to manually keep this list updated then remove the PATCHES_START and PATCHES_END 
-     comment blocks entirely. -->
-
-#### A list of your patches will be automatically shown here after your first patches release is created.
-
-&nbsp;
-
-## 🚀 Get started
-
-To start using this template, follow these steps:
-
-1. [Setup](https://github.com/MorpheApp/morphe-documentation/blob/main/docs/morphe-development/README.md) your development environment including adding a GitHub PAT as described [here](https://github.com/MorpheApp/morphe-patcher/blob/main/docs/2_1_setup.md#-prepare-the-environment).
-2. [Create a new repository using this template](https://github.com/new?template_name=morphe-patches-template&template_owner=MorpheApp)
-3. Set up the [build.gradle.kts](patches/build.gradle.kts) file (Specifically, the 
-   [group of the project](patches/build.gradle.kts#L1), and the [About](patches/build.gradle.kts#L5-L11))
-4. Set up the [README.md](README.md) file[^1] (e.g, title, description, license, 
-   summary of the patches that are included in the repository), the [issue templates](.github/ISSUE_TEMPLATE)[^2]
-   and the [contribution guidelines](CONTRIBUTING.md)[^3].
-5. Choose a name for your patches project. Keep in mind you must use a unique name that does not 
-   imply or suggest authorship by the Morphe open source project. If unsure, then simply name these
-   patches after yourself ("UserXYZ Morphe patches"). See the [NOTICE](NOTICE) for details. 
-6. (Optional): Add `patches-bundle.png` to the project if you want a custom icon to show in
-   Morphe Manager instead of your GitHub profile avatar.
-
-🎉 You are now ready to start creating patches!
-
-## 🧑‍💻 Usage
-
-To develop and release Morphe Patches using this template, some things need to be considered:
-
-- Development starts in feature branches. Once a feature branch is ready, it is squashed and merged into the `dev` branch
-- The `dev` branch is merged into the `main` branch once it is ready for release
-- Semantic versioning is used to version Morphe Patches.
-- [Semantic commit](https://kapeli.com/cheat_sheets/Semantic_Commits.docset/Contents/Resources/Documents/index) messages are used for commits
-- Commits on the `dev` branch and `main` branch are automatically released
-via the [release.yml](.github/workflows/release.yml) workflow, which is also responsible for generating the changelog
-and updating the version of Morphe Patches. It is triggered by pushing to the `dev` or `main` branch.
-The workflow uses the `publish` task to publish the release of Morphe Patches.
-- The `buildAndroid` task is used to build Morphe Patches so that it can be used on Android.
-
-
-## 🤓 Tips
-- See the [patcher documentation](https://github.com/MorpheApp/morphe-patcher/blob/main/docs/1_patcher_intro.md)
-  for more examples of creating patches and fingerprints.
-- Do not manually edit any generated files such as: `patches-list.json`, `patches-bundle.json`, `CHANGELOG.md`.
-  These files will be automatically updated in the release action.
-- Do not force push any semantic release commits or you will break the release. To 'redo' the last release then:
-  - Git drop the last dev/main semantic release commit you want to redo.
-  - Delete the release from the release area of this repo and delete the tag   
-  - Make any other changes you wish to do
-  - Force push dev/main branch
-  - A new replacement release will be created by `release.yml`
-
-
-## 📚 Everything else
-
-Optionally you can include a button/link in this readme that users can click to add your 
-patches to Morphe (update the links below after creating your new patches repo):
-
-<!-- The patches end tag is intentionally placed here so the first release will cleanup 
-     this readme of all developer instructions above. -->
 <!-- PATCHES_END -->
 
-#### How to use these patches
+&nbsp;
+## How it works
 
-Click here to add these patches to Morphe: https://morphe.software/add-source?github=xyz-user/xyz-patches
+**Crunchyroll** already has a speed menu behind a feature flag and a resize
+mode it never exposes. Two patches flip the flag and widen the speed table; a
+third adds a toggle button to the player overlay that cycles the resize mode,
+appearing and disappearing with the app's own controls.
 
-Or manually add this repository url as a patch source in Morphe: https://github.com/xyz-user/xyz-patches
+**HBO Max and Disney+** are handled by a single patch. Both play through
+androidx.media3, so rather than fingerprinting two different player UIs it
+injects two instructions — one to hand the extension an application context,
+one in the player constructor to capture the ExoPlayer — and does the rest at
+runtime: the video surface is found by walking the view tree, speed goes
+through media3's `setPlaybackSpeed`, and the picture is reshaped through
+`AspectRatioFrameLayout.setResizeMode`. A floating panel over the player
+carries the controls; it dims and collapses a few seconds after you stop
+touching it, and can be dragged out of the way.
 
-### 📙 Contributing
+Because none of that depends on either app's own layouts or class names, the
+same patch covers both and should survive most app updates.
 
-Thank you for considering contributing to UserXYZ Morphe Patches.  
-You can find the contribution guidelines [here](CONTRIBUTING.md).
+## Status
 
-### 🛠️ Building
+Crunchyroll and HBO Max are tested on device. **Disney+ is written against a
+decompiled 26.14.1 but has not been run yet** — the hooks it needs were
+verified in the bytecode, not in the app.
 
-To build UserXYZ Morphe Patches,
-you can follow the [Morphe documentation](https://github.com/MorpheApp/morphe-documentation).
+## Building
 
-## 📜 License
+The Morphe Gradle plugin is published to GitHub Packages, which rejects
+anonymous requests. For a local build, put a token with the `read:packages`
+scope in `~/.gradle/gradle.properties`:
 
-UserXYZ Morphe Patches are licensed under the [GNU General Public License v3.0](LICENSE)
+```properties
+gpr.user = <github username>
+gpr.key = <token>
+```
+
+Then:
+
+```
+./gradlew :patches:buildAndroid
+```
+
+The bundle is written to `patches/build/libs/patches-*.mpp`. CI needs no setup;
+it uses the token GitHub provides to the workflow.
+
+## Licence
+
+GPLv3. Not affiliated with, endorsed by, or authored by the Morphe project.
