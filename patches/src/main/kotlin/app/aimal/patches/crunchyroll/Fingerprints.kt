@@ -54,18 +54,15 @@ object InternalPlayerViewLayoutClassFingerprint : Fingerprint(
     ),
 )
 
-object ShowControlsFingerprint : Fingerprint(
+/**
+ * InternalPlayerViewLayout.onAttachedToWindow — where the aspect-ratio toggle
+ * is injected. The class is found by the (unobfuscated) fingerprint above; the
+ * method name is a framework override and cannot be renamed, so this is stable.
+ */
+object PlayerViewOnAttachedFingerprint : Fingerprint(
     classFingerprint = InternalPlayerViewLayoutClassFingerprint,
     returnType = "V",
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     parameters = listOf(),
-    custom = { method, _ -> method.name == "showControls" },
-)
-
-object HideControlsFingerprint : Fingerprint(
-    classFingerprint = InternalPlayerViewLayoutClassFingerprint,
-    returnType = "V",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    custom = { method, _ -> method.name == "hideControls" },
+    custom = { method, _ -> method.name == "onAttachedToWindow" },
 )

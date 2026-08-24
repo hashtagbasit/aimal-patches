@@ -6,7 +6,7 @@ import app.morphe.patcher.patch.bytecodePatch
 @Suppress("unused")
 val aspectRatioPatch = bytecodePatch(
     name = "Aspect ratio control",
-    description = "Adds an aspect ratio toggle button to the player (Fit/Fill/Crop/16:9).",
+    description = "Adds a Fit/Stretch toggle to the player.",
     default = true,
 ) {
     compatibleWith(CRUNCHYROLL)
@@ -14,27 +14,18 @@ val aspectRatioPatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        val method = InternalPlayerViewLayoutClassFingerprint.method
-        val lastIndex = method.implementation!!.instructions.toList().size - 1
-
-        method.addInstructions(
-            lastIndex,
-            """
-                invoke-static {p0}, Lapp/aimal/extension/crunchyroll/AspectRatioHelper;->addAspectRatioButton(Landroid/view/View;)V
-            """,
-        )
-
-        ShowControlsFingerprint.method.addInstructions(
+        // Crunchyroll's InternalPlayerViewLayout is a media3 PlayerView. Attach
+        // the toggle when the view attaches to the window - that runs every
+        // time the player is shown, unlike the ad-view setup method the earlier
+        // version hooked, and it needs neither the controls-visibility hooks nor
+        // any per-version layout fingerprint.
+        //
+        // p0 is the PlayerView (a View); the extension adds the chip and drives
+        // setResizeMode on it by reflection.
+        PlayerViewOnAttachedFingerprint.method.addInstructions(
             0,
             """
-                invoke-static {p0}, Lapp/aimal/extension/crunchyroll/AspectRatioHelper;->onShowControls(Landroid/view/View;)V
-            """,
-        )
-
-        HideControlsFingerprint.method.addInstructions(
-            0,
-            """
-                invoke-static {p0}, Lapp/aimal/extension/crunchyroll/AspectRatioHelper;->onHideControls(Landroid/view/View;)V
+                invoke-static { p0 }, Lapp/aimal/extension/crunchyroll/AspectRatioHelper;->addAspectRatioButton(Landroid/view/View;)V
             """,
         )
     }
