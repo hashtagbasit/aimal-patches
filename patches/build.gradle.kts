@@ -3,11 +3,11 @@ group = "app.aimal"
 patches {
     about {
         name = "Aimal Patches"
-        description = "Custom Morphe patches for Crunchyroll - speed control"
+        description = "Playback speed and aspect ratio controls for Crunchyroll, HBO Max and Disney+"
         source = "https://github.com/hashtagbasit/aimal-patches"
-        author = "Aimal"
-        contact = ""
-        website = ""
+        author = "hashtagbasit"
+        contact = "https://github.com/hashtagbasit/aimal-patches/issues"
+        website = "https://github.com/hashtagbasit/aimal-patches"
         license = "GPLv3"
     }
 }
