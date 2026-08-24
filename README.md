@@ -34,8 +34,48 @@ Desktop merge them for you.
 ## Patches list
 
 <!-- PATCHES_START EXPANDED -->
+> **[v1.0.0](https://github.com/hashtagbasit/aimal-patches/releases/tag/v1.0.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;5 patches total
+<details open>
+<summary>📦 Crunchyroll&nbsp;&nbsp;•&nbsp;&nbsp;3 patches</summary>
+<br>
 
-<!-- Do not modify this section by hand. The patch list is generated when release.yml creates a new release. -->
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Add fast playback speeds](#add-fast-playback-speeds) | Adds 1.25x, 1.5x, 1.75x, and 2.0x playback speed options. |  |
+| [Aspect ratio control](#aspect-ratio-control) | Adds an aspect ratio toggle button to the player (Fit/Fill/Crop/16:9). |  |
+| [Enable speed control](#enable-speed-control) | Enables playback speed options (0.5x-2.0x) in the video player. |  |
+
+</details>
+
+<details open>
+<summary>📦 HBO Max&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
+<br>
+
+**🎯 Supported versions:**
+
+| 7.9.0.84 |
+| :---: |
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds a floating panel to change playback speed and stretch, crop or zoom the picture. |  |
+
+</details>
+
+<details open>
+<summary>📦 Disney+&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
+<br>
+
+**🎯 Supported versions:**
+
+| 26.14.1+rc2-2026.08.20 |
+| :---: |
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds a floating panel to change playback speed and stretch, crop or zoom the picture. |  |
+
+</details>
 
 <!-- PATCHES_END -->
 
