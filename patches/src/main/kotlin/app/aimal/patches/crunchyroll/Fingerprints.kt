@@ -4,7 +4,7 @@ import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.string
 import com.android.tools.smali.dexlib2.AccessFlags
 
-// ── Speed Control ──
+// ── Speed control ──
 
 object PlaybackSpeedConfigToStringFingerprint : Fingerprint(
     returnType = "Ljava/lang/String;",
@@ -24,81 +24,8 @@ object PlayerSettingsViewModelConstructorFingerprint : Fingerprint(
     ),
 )
 
-// ── Feature Flags ──
+// ── Player view ──
 
-object SvodPreRollConfigToStringFingerprint : Fingerprint(
-    returnType = "Ljava/lang/String;",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    filters = listOf(
-        string("SvodPreRollConfigImpl(isEnabled="),
-    ),
-)
-
-object PipConfigToStringFingerprint : Fingerprint(
-    returnType = "Ljava/lang/String;",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    filters = listOf(
-        string("PipConfigImpl(_isEnabled="),
-    ),
-)
-
-// Finds the InAppReviewConfigGateway class via its getConfig() method
-object InAppReviewGatewayGetConfigFingerprint : Fingerprint(
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    filters = listOf(
-        string("in_app_review"),
-    ),
-)
-
-object InAppUpdatesConfigToStringFingerprint : Fingerprint(
-    returnType = "Ljava/lang/String;",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    filters = listOf(
-        string("InAppUpdatesConfigImpl(isEnabled="),
-    ),
-)
-
-object ChromecastSkipEventsConfigToStringFingerprint : Fingerprint(
-    returnType = "Ljava/lang/String;",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    filters = listOf(
-        string("ChromecastSkipEventsConfigImpl(isEnabled="),
-    ),
-)
-
-object ContentLabelsConfigToStringFingerprint : Fingerprint(
-    returnType = "Ljava/lang/String;",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    filters = listOf(
-        string("ContentLabelsConfigImpl(isEnabled="),
-    ),
-)
-
-object ShareRedesignConfigToStringFingerprint : Fingerprint(
-    returnType = "Ljava/lang/String;",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    filters = listOf(
-        string("ShareRedesignConfigImpl(isEnabled="),
-    ),
-)
-
-object MangaConfigToStringFingerprint : Fingerprint(
-    returnType = "Ljava/lang/String;",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    filters = listOf(
-        string("MangaConfigImpl(isEnabled="),
-    ),
-)
-
-// Class fingerprint - finds InternalPlayerViewLayout via unique string in S3()
 object InternalPlayerViewLayoutClassFingerprint : Fingerprint(
     returnType = "V",
     parameters = listOf("Z"),
@@ -106,18 +33,6 @@ object InternalPlayerViewLayoutClassFingerprint : Fingerprint(
         string("getAdViewGroup(...)"),
     ),
 )
-
-// Method fingerprint - scoped to the class found above, targets x2()
-object PlayerViewSetupFingerprint : Fingerprint(
-    classFingerprint = InternalPlayerViewLayoutClassFingerprint,
-    returnType = "V",
-    parameters = listOf("Z", "Z", "L", "L", "L", "L"),
-    filters = listOf(
-        string("buttonDataProviderLiveData"),
-    ),
-)
-
-// ── Aspect Ratio Visibility ──
 
 object ShowControlsFingerprint : Fingerprint(
     classFingerprint = InternalPlayerViewLayoutClassFingerprint,
@@ -133,69 +48,4 @@ object HideControlsFingerprint : Fingerprint(
     accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     parameters = listOf(),
     custom = { method, _ -> method.name == "hideControls" },
-)
-
-// ── Geo Spoof ──
-
-object CountryCodeGetterFingerprint : Fingerprint(
-    returnType = "Ljava/lang/String;",
-    accessFlags = listOf(AccessFlags.PUBLIC),
-    parameters = listOf(),
-    custom = { _, classDef ->
-        classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/MobileCountryCodeProviderImpl;"
-    },
-)
-
-object CountryCodeUpdateFingerprint : Fingerprint(
-    returnType = "V",
-    accessFlags = listOf(AccessFlags.PUBLIC),
-    parameters = listOf("Ljava/lang/String;"),
-    custom = { method, classDef ->
-        classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/MobileCountryCodeProviderImpl;" &&
-            method.name == "updateCountryCode"
-    },
-)
-
-object LocaleInterceptorFingerprint : Fingerprint(
-    returnType = "Lokhttp3/Response;",
-    accessFlags = listOf(AccessFlags.PUBLIC),
-    parameters = listOf("Lokhttp3/Interceptor\$Chain;"),
-    filters = listOf(
-        string("locale"),
-    ),
-    custom = { _, classDef ->
-        classDef.type == "Lcom/ellation/crunchyroll/api/LocaleInterceptor;"
-    },
-)
-
-object LocalePathInterceptorFingerprint : Fingerprint(
-    returnType = "Lokhttp3/Response;",
-    accessFlags = listOf(AccessFlags.PUBLIC),
-    parameters = listOf("Lokhttp3/Interceptor\$Chain;"),
-    filters = listOf(
-        string("{locale}"),
-    ),
-    custom = { _, classDef ->
-        classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/LocalePathInterceptor;"
-    },
-)
-
-object AnonymousTokenCountryFingerprint : Fingerprint(
-    returnType = "Ljava/lang/String;",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    custom = { method, classDef ->
-        classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/model/AnonymousTokenResponse;" &&
-            method.name == "getCountry"
-    },
-)
-
-object UserTokenCountryFingerprint : Fingerprint(
-    returnType = "Ljava/lang/String;",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    custom = { method, classDef ->
-        classDef.type == "Lcom/ellation/crunchyroll/api/etp/auth/model/UserTokenResponse;" &&
-            method.name == "getCountry"
-    },
 )
