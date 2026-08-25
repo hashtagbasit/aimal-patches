@@ -102,6 +102,31 @@ internal object VideoFragmentShouldShowAdsFingerprint : Fingerprint(
 )
 
 /**
+ * `VideoActivity.updatePanels()` - `g()V` in 26.5.0.
+ *
+ * The activity's panel-visibility pass. It decides whether the bottom panel
+ * (phone layout) and the side panel (tablet layout) are shown, and it is called
+ * from `onConfigurationChanged`, so it runs again every time the device is
+ * folded or unfolded.
+ *
+ * `VideoActivity` is named in the app manifest and so cannot be obfuscated,
+ * which leaves only the method to identify. It is matched on the two view-name
+ * strings its own `checkNotNullExpressionValue` calls carry. One other method
+ * in the class carries both, but it takes a boolean - so requiring no
+ * parameters picks this one out on its own, which was verified against the dex.
+ */
+internal object VideoActivityUpdatePanelsFingerprint : Fingerprint(
+    definingClass = "Lcom/viki/android/video/VideoActivity;",
+    returnType = "V",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    parameters = listOf(),
+    filters = listOf(
+        string("bottomPanel"),
+        string("rightPanel"),
+    ),
+)
+
+/**
  * Viki's Application, which declares its own `onCreate`.
  *
  * Used by the shared playback-controls patch to hand the extension a context
