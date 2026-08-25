@@ -90,9 +90,11 @@ public final class AspectRatioHelper {
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.WRAP_CONTENT,
                     FrameLayout.LayoutParams.WRAP_CONTENT);
-            params.gravity = Gravity.TOP | Gravity.END;
+            // Top-left: the top-right corner is where Crunchyroll puts cast,
+            // settings and close, and the chips were landing on top of them.
+            params.gravity = Gravity.TOP | Gravity.START;
             params.topMargin = dp(ctx, 24);
-            params.rightMargin = dp(ctx, 16);
+            params.leftMargin = dp(ctx, 16);
             row.setLayoutParams(params);
 
             final Handler handler = new Handler(Looper.getMainLooper());
@@ -196,9 +198,14 @@ public final class AspectRatioHelper {
      */
     private static void toast(Context ctx) {
         try {
-            String message = SubtitleStyler.hookSeen()
-                    ? "Applies on the next episode or subtitle change"
-                    : "Saved - no subtitle track has loaded yet";
+            String message;
+            if (!SubtitleStyler.patched()) {
+                message = "Subtitle styling patch is not applied";
+            } else if (!SubtitleStyler.hookSeen()) {
+                message = "Saved - no subtitle track has loaded yet";
+            } else {
+                message = "Applies on the next episode or subtitle change";
+            }
             Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show();
         } catch (Throwable ignored) {
         }

@@ -80,6 +80,23 @@ public final class SubtitleStyler {
         return hookSeen;
     }
 
+    /**
+     * Set from the patched subtitle renderer's initialize(), which runs long
+     * before any track loads. Without this, "the patch was never applied" and
+     * "no subtitle has loaded yet" are indistinguishable from the outside.
+     */
+    private static volatile boolean patched;
+
+    static boolean patched() {
+        return patched;
+    }
+
+    /** Called from the patch. Must not throw. */
+    public static void markPatched() {
+        patched = true;
+        Log.i(TAG, "Subtitle styling patch is active");
+    }
+
     private SubtitleStyler() {
     }
 
