@@ -1,3 +1,10 @@
+# [1.1.0-dev.7](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.6...v1.1.0-dev.7) (2026-08-25)
+
+
+### Features
+
+* give the Viki player the whole screen on unfolded foldables ([1188522](https://github.com/hashtagbasit/aimal-patches/commit/1188522023c401ede6f6e7efa9db29b454fd92e7))
+
 # [1.1.0-dev.6](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.5...v1.1.0-dev.6) (2026-08-25)
 
 
