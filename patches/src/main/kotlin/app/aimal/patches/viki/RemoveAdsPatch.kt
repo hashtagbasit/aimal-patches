@@ -42,7 +42,7 @@ import app.morphe.patcher.patch.bytecodePatch
 @Suppress("unused")
 val removeAdsPatch = bytecodePatch(
     name = "Remove ads",
-    description = "Removes pre-roll and mid-roll video ads and the banner ads.",
+    description = "Removes pre-roll and mid-roll video ads, and the display banners.",
     default = true,
 ) {
     compatibleWith(VIKI)

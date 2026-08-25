@@ -26,7 +26,7 @@ import app.morphe.patcher.patch.bytecodePatch
 @Suppress("unused")
 val unlockHdPatch = bytecodePatch(
     name = "Unlock HD quality",
-    description = "Enables the \"High\" (1080p) video quality option.",
+    description = "Unlocks the High (1080p) video quality option.",
     default = true,
 ) {
     compatibleWith(VIKI)
