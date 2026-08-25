@@ -44,6 +44,23 @@ object PlayerSettingsViewModelConstructorFingerprint : Fingerprint(
     ),
 )
 
+/**
+ * SubtitlesRendererImpl.loadTrack, which receives the whole ASS script as a
+ * String and hands it to libass.
+ *
+ * Crunchyroll renders subtitles natively into bitmaps, so there is no text left
+ * to style by the time anything reaches a View. This is the last point where the
+ * script is still text. Both the class and the method keep their names (the
+ * class is a public Kotlin type implementing SubtitlesRenderer), and the
+ * signature is distinctive on its own: one String in, a long native handle out.
+ */
+object SubtitlesLoadTrackFingerprint : Fingerprint(
+    definingClass = "Lcom/crunchyroll/subtitles/SubtitlesRendererImpl;",
+    name = "loadTrack",
+    returnType = "J",
+    parameters = listOf("Ljava/lang/String;"),
+)
+
 // ── Player view ──
 
 object InternalPlayerViewLayoutClassFingerprint : Fingerprint(

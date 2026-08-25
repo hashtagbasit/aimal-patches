@@ -34,9 +34,9 @@ Desktop merge them for you.
 ## Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.0.2](https://github.com/hashtagbasit/aimal-patches/releases/tag/v1.0.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;5 patches total
+> **[v1.1.0-dev.9](https://github.com/hashtagbasit/aimal-patches/releases/tag/v1.1.0-dev.9)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;9 patches total
 <details open>
-<summary>📦 Crunchyroll&nbsp;&nbsp;•&nbsp;&nbsp;3 patches</summary>
+<summary>📦 Crunchyroll&nbsp;&nbsp;•&nbsp;&nbsp;4 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -49,6 +49,7 @@ Desktop merge them for you.
 | [Add fast playback speeds](#add-fast-playback-speeds) | Adds 1.25x, 1.5x, 1.75x, and 2.0x playback speed options. |  |
 | [Aspect ratio control](#aspect-ratio-control) | Adds a Fit/Stretch toggle to the player. |  |
 | [Enable speed control](#enable-speed-control) | Enables playback speed options (0.5x-2.0x) in the video player. |  |
+| [Subtitle styling](#subtitle-styling) | Adds subtitle size, font and outline controls to the player. |  |
 
 </details>
 
@@ -79,6 +80,23 @@ Desktop merge them for you.
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds a floating panel to change playback speed and stretch, crop or zoom the picture. |  |
+
+</details>
+
+<details open>
+<summary>📦 Viki&nbsp;&nbsp;•&nbsp;&nbsp;3 patches</summary>
+<br>
+
+**🎯 Supported versions:**
+
+| 26.5.0 |
+| :---: |
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds a floating panel to change playback speed and stretch, crop or zoom the picture. |  |
+| [Remove ads](#remove-ads) | Removes pre-roll and mid-roll video ads, and the display banners. |  |
+| [Use the whole screen for video](#use-the-whole-screen-for-video) | Hides the comments panel beside the player on tablets and unfolded foldables. |  |
 
 </details>
 
