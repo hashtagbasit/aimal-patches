@@ -1,3 +1,10 @@
+# [1.1.0-dev.5](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.4...v1.1.0-dev.5) (2026-08-25)
+
+
+### Bug Fixes
+
+* drop the initialize hook that stopped subtitles loading ([27f203b](https://github.com/hashtagbasit/aimal-patches/commit/27f203b1bec306fbf37a9dc4e13b207d034d4944))
+
 # [1.1.0-dev.4](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.3...v1.1.0-dev.4) (2026-08-25)
 
 
