@@ -34,7 +34,7 @@ Desktop merge them for you.
 ## Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.1.0-dev.8](https://github.com/hashtagbasit/aimal-patches/releases/tag/v1.1.0-dev.8)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;10 patches total
+> **[v1.1.0-dev.9](https://github.com/hashtagbasit/aimal-patches/releases/tag/v1.1.0-dev.9)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;9 patches total
 <details open>
 <summary>📦 Crunchyroll&nbsp;&nbsp;•&nbsp;&nbsp;4 patches</summary>
 <br>
@@ -84,7 +84,7 @@ Desktop merge them for you.
 </details>
 
 <details open>
-<summary>📦 Viki&nbsp;&nbsp;•&nbsp;&nbsp;4 patches</summary>
+<summary>📦 Viki&nbsp;&nbsp;•&nbsp;&nbsp;3 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -96,7 +96,6 @@ Desktop merge them for you.
 |----------|----------------|-----------|
 | [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds a floating panel to change playback speed and stretch, crop or zoom the picture. |  |
 | [Remove ads](#remove-ads) | Removes pre-roll and mid-roll video ads, and the display banners. |  |
-| [Unlock HD quality](#unlock-hd-quality) | Unlocks the High (1080p) video quality option. |  |
 | [Use the whole screen for video](#use-the-whole-screen-for-video) | Hides the comments panel beside the player on tablets and unfolded foldables. |  |
 
 </details>

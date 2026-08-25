@@ -1,3 +1,10 @@
+# [1.1.0-dev.9](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.8...v1.1.0-dev.9) (2026-08-25)
+
+
+### Bug Fixes
+
+* attach only the current release's .mpp, not the previous one too ([f7dec69](https://github.com/hashtagbasit/aimal-patches/commit/f7dec69e9a7e8d85f8e5b8232581d8fb8e7099a4))
+
 # [1.1.0-dev.8](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.7...v1.1.0-dev.8) (2026-08-25)
 
 
