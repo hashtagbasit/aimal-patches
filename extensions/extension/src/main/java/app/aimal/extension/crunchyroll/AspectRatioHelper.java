@@ -196,8 +196,10 @@ public final class AspectRatioHelper {
      */
     private static void toast(Context ctx) {
         try {
-            Toast.makeText(ctx, "Applies on the next episode or subtitle change",
-                    Toast.LENGTH_SHORT).show();
+            String message = SubtitleStyler.hookSeen()
+                    ? "Applies on the next episode or subtitle change"
+                    : "Saved - no subtitle track has loaded yet";
+            Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show();
         } catch (Throwable ignored) {
         }
     }

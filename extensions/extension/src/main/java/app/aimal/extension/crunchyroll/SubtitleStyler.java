@@ -2,6 +2,7 @@ package app.aimal.extension.crunchyroll;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,46 +50,117 @@ public final class SubtitleStyler {
 
     private static final String[] BORDER_LABELS = {"BORDER: AS-IS", "OUTLINE", "BOX"};
 
+    static final String TAG = "StreamPlayback";
+
+    /**
+     * The values live in memory, not in SharedPreferences.
+     *
+     * An earlier version read every setting straight from SharedPreferences and
+     * treated a null instance as "everything is default". Since the only thing
+     * that created that instance was the player view attaching, a tap could be
+     * silently discarded and the script was never modified — the settings
+     * appeared to do nothing at all. Memory is now the source of truth and
+     * storage is best-effort on top.
+     */
+    private static volatile int size = 2;
+    private static volatile int font = 0;
+    private static volatile int border = 0;
+
     private static SharedPreferences preferences;
+    private static boolean loaded;
+
+    /**
+     * Set the first time the patched loadTrack hook calls in. Lets the UI tell
+     * "no subtitle track has loaded yet" apart from "the Subtitle styling patch
+     * was never applied", which look identical from the user's side.
+     */
+    private static volatile boolean hookSeen;
+
+    static boolean hookSeen() {
+        return hookSeen;
+    }
 
     private SubtitleStyler() {
     }
 
     static void init(Context context) {
-        if (preferences == null && context != null) {
-            preferences = context.getApplicationContext()
-                    .getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        load(context);
+    }
+
+    /**
+     * Resolves SharedPreferences once, from a supplied Context or, failing
+     * that, from the running Application. Not depending on a hook to hand over
+     * a Context matters because the subtitle track can load before any of the
+     * view-level hooks have run.
+     */
+    private static synchronized void load(Context context) {
+        if (loaded) return;
+
+        try {
+            Context resolved = context != null ? context.getApplicationContext() : currentApplication();
+            if (resolved == null) return; // Try again on the next call.
+
+            preferences = resolved.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            size = preferences.getInt(KEY_SIZE, size);
+            font = preferences.getInt(KEY_FONT, font);
+            border = preferences.getInt(KEY_BORDER, border);
+            loaded = true;
+            Log.i(TAG, "Subtitle settings loaded: size=" + size + " font=" + font + " border=" + border);
+        } catch (Throwable t) {
+            Log.e(TAG, "Could not load subtitle settings", t);
+        }
+    }
+
+    private static Context currentApplication() {
+        try {
+            return (Context) Class.forName("android.app.ActivityThread")
+                    .getMethod("currentApplication")
+                    .invoke(null);
+        } catch (Throwable t) {
+            return null;
         }
     }
 
     // Settings ----------------------------------------------------------------
 
     static int size() {
-        return preferences == null ? 2 : preferences.getInt(KEY_SIZE, 2);
+        load(null);
+        return size;
     }
 
     static int font() {
-        return preferences == null ? 0 : preferences.getInt(KEY_FONT, 0);
+        load(null);
+        return font;
     }
 
     static int border() {
-        return preferences == null ? 0 : preferences.getInt(KEY_BORDER, 0);
+        load(null);
+        return border;
     }
 
     static int cycleSize() {
-        return put(KEY_SIZE, (size() + 1) % SIZES.length);
+        size = (size() + 1) % SIZES.length;
+        return put(KEY_SIZE, size);
     }
 
     static int cycleFont() {
-        return put(KEY_FONT, (font() + 1) % FONTS.length);
+        font = (font() + 1) % FONTS.length;
+        return put(KEY_FONT, font);
     }
 
     static int cycleBorder() {
-        return put(KEY_BORDER, (border() + 1) % BORDER_LABELS.length);
+        border = (border() + 1) % BORDER_LABELS.length;
+        return put(KEY_BORDER, border);
     }
 
     private static int put(String key, int value) {
-        if (preferences != null) preferences.edit().putInt(key, value).apply();
+        // The in-memory value has already been updated; storing is a bonus so
+        // the choice survives a restart.
+        try {
+            if (preferences != null) preferences.edit().putInt(key, value).apply();
+        } catch (Throwable ignored) {
+        }
+        Log.i(TAG, "Subtitle setting " + key + " = " + value);
         return value;
     }
 
@@ -118,7 +190,15 @@ public final class SubtitleStyler {
      */
     public static String restyle(String script) {
         try {
-            if (script == null || script.length() == 0 || !isModified()) return script;
+            hookSeen = true;
+            Log.i(TAG, "restyle() called, script=" + (script == null ? "null" : script.length() + " chars")
+                    + " size=" + size() + " font=" + font() + " border=" + border());
+
+            if (script == null || script.length() == 0) return script;
+            if (!isModified()) {
+                Log.i(TAG, "Subtitle settings are all default; script left untouched");
+                return script;
+            }
 
             String[] lines = script.split("\n", -1);
             List<String> columns = null;
@@ -144,7 +224,13 @@ public final class SubtitleStyler {
                 }
             }
 
-            if (rewritten == 0) return script;
+            if (rewritten == 0) {
+                // Either there is no [V4+ Styles] section or its Format line was
+                // missing; without the column names nothing can be rewritten.
+                Log.i(TAG, "No Style lines were rewritten - is this really an ASS script?");
+                return script;
+            }
+            Log.i(TAG, "Rewrote " + rewritten + " Style line(s)");
 
             StringBuilder out = new StringBuilder(script.length() + 128);
             for (int i = 0; i < lines.length; i++) {
@@ -153,6 +239,7 @@ public final class SubtitleStyler {
             }
             return out.toString();
         } catch (Throwable t) {
+            Log.e(TAG, "restyle failed; using the original script", t);
             return script;
         }
     }
