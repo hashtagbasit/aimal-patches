@@ -1,3 +1,10 @@
+# [1.1.0-dev.2](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.1...v1.1.0-dev.2) (2026-08-25)
+
+
+### Features
+
+* subtitle styling for Crunchyroll ([7f247cb](https://github.com/hashtagbasit/aimal-patches/commit/7f247cbb0f9e3b9875b4a256c0dc36efa606e825))
+
 # [1.1.0-dev.1](https://github.com/hashtagbasit/aimal-patches/compare/v1.0.2...v1.1.0-dev.1) (2026-08-25)
 
 
