@@ -61,22 +61,6 @@ object SubtitlesLoadTrackFingerprint : Fingerprint(
     parameters = listOf("Ljava/lang/String;"),
 )
 
-/**
- * SubtitlesRendererImpl.initialize, which sets libass up long before any track
- * is loaded. Hooked purely so the extension knows the Subtitle styling patch is
- * actually present — otherwise a missing patch and a not-yet-loaded subtitle
- * look identical from the player.
- *
- * The second parameter is a Kotlin Continuation, whose class is obfuscated, so
- * it is declared as a bare object type.
- */
-object SubtitlesRendererInitializeFingerprint : Fingerprint(
-    definingClass = "Lcom/crunchyroll/subtitles/SubtitlesRendererImpl;",
-    name = "initialize",
-    returnType = "Ljava/lang/Object;",
-    parameters = listOf("Z", "L"),
-)
-
 // ── Player view ──
 
 object InternalPlayerViewLayoutClassFingerprint : Fingerprint(

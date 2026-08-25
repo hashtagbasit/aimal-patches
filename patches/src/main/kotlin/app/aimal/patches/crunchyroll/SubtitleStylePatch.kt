@@ -14,16 +14,6 @@ val subtitleStylePatch = bytecodePatch(
     extendWith("extensions/extension.mpe")
 
     execute {
-        // Marks the patch as present as soon as the subtitle renderer starts
-        // up. Without this, "the patch was never applied" and "no subtitle has
-        // loaded yet" are indistinguishable from the player.
-        SubtitlesRendererInitializeFingerprint.method.addInstructions(
-            0,
-            """
-                invoke-static { }, Lapp/aimal/extension/crunchyroll/SubtitleStyler;->markPatched()V
-            """,
-        )
-
         // Crunchyroll renders subtitles with libass, straight to bitmaps, so by
         // the time they reach a View there is no text left to restyle. The whole
         // ASS script does pass through here as a String on its way to the native
