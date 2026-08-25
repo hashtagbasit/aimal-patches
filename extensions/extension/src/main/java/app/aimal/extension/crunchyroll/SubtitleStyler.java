@@ -69,6 +69,9 @@ public final class SubtitleStyler {
     private static SharedPreferences preferences;
     private static boolean loaded;
 
+    /** Set once the user cycles anything, so [load] cannot clobber the choice. */
+    private static volatile boolean userChanged;
+
     /**
      * Set the first time the patched loadTrack hook calls in. Lets the UI tell
      * "no subtitle track has loaded yet" apart from "the Subtitle styling patch
@@ -118,9 +121,23 @@ public final class SubtitleStyler {
             if (resolved == null) return; // Try again on the next call.
 
             preferences = resolved.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-            size = preferences.getInt(KEY_SIZE, size);
-            font = preferences.getInt(KEY_FONT, font);
-            border = preferences.getInt(KEY_BORDER, border);
+
+            if (userChanged) {
+                // The user cycled a setting before storage could be resolved -
+                // the subtitle track can load before any view hook has run, so
+                // this really happens. Their choice is the newer one, so write
+                // it out rather than overwriting it with the previous run's.
+                preferences.edit()
+                        .putInt(KEY_SIZE, size)
+                        .putInt(KEY_FONT, font)
+                        .putInt(KEY_BORDER, border)
+                        .apply();
+            } else {
+                size = preferences.getInt(KEY_SIZE, size);
+                font = preferences.getInt(KEY_FONT, font);
+                border = preferences.getInt(KEY_BORDER, border);
+            }
+
             loaded = true;
             Log.i(TAG, "Subtitle settings loaded: size=" + size + " font=" + font + " border=" + border);
         } catch (Throwable t) {
@@ -171,6 +188,7 @@ public final class SubtitleStyler {
     }
 
     private static int put(String key, int value) {
+        userChanged = true;
         // The in-memory value has already been updated; storing is a bonus so
         // the choice survives a restart.
         try {
@@ -249,6 +267,13 @@ public final class SubtitleStyler {
             }
             Log.i(TAG, "Rewrote " + rewritten + " Style line(s)");
 
+            // Rewriting the styles is not always enough: an inline override tag
+            // on a dialogue line beats the [V4+ Styles] block, so a track that
+            // carries {\fs28} on every line ignores everything above - which is
+            // precisely what "the settings do nothing" looks like from outside.
+            int overridden = stripOverrides(lines);
+            Log.i(TAG, "Stripped inline overrides from " + overridden + " dialogue line(s)");
+
             StringBuilder out = new StringBuilder(script.length() + 128);
             for (int i = 0; i < lines.length; i++) {
                 if (i > 0) out.append('\n');
@@ -300,6 +325,118 @@ public final class SubtitleStyler {
             out.append(values.get(i));
         }
         return out.toString();
+    }
+
+    /**
+     * Removes the inline override tags that would otherwise beat the rewritten
+     * [V4+ Styles] block.
+     *
+     * Only tags matching a setting the user actually changed are removed, so a
+     * track keeps its positioning, karaoke, colour and drawing tags. Returns how
+     * many dialogue lines were touched.
+     */
+    private static int stripOverrides(String[] lines) {
+        boolean dropSize = size() != 2;
+        boolean dropFont = font() != 0;
+        if (!dropSize && !dropFont) return 0;
+
+        int changed = 0;
+        boolean inEvents = false;
+
+        for (int i = 0; i < lines.length; i++) {
+            String trimmed = lines[i].trim();
+
+            if (trimmed.startsWith("[")) {
+                inEvents = trimmed.equalsIgnoreCase("[Events]");
+                continue;
+            }
+            if (!inEvents || !startsWith(trimmed, "Dialogue:")) continue;
+
+            String updated = stripBlocks(lines[i], dropSize, dropFont);
+            if (!updated.equals(lines[i])) {
+                lines[i] = updated;
+                changed++;
+            }
+        }
+
+        return changed;
+    }
+
+    /** Rewrites every {...} override block in one dialogue line. */
+    private static String stripBlocks(String line, boolean dropSize, boolean dropFont) {
+        if (line.indexOf('{') < 0) return line;
+
+        StringBuilder out = new StringBuilder(line.length());
+        int i = 0;
+
+        while (i < line.length()) {
+            char c = line.charAt(i);
+            if (c != '{') {
+                out.append(c);
+                i++;
+                continue;
+            }
+
+            int end = line.indexOf('}', i);
+            if (end < 0) {
+                // Unbalanced brace: leave the rest exactly as it was.
+                out.append(line.substring(i));
+                break;
+            }
+
+            String block = line.substring(i + 1, end);
+
+            // An animation tag nests its own backslashes inside parentheses -
+            // \t(0,500,\fs30). Splitting on backslashes would tear that apart,
+            // so such a block is left completely alone.
+            String kept = block.contains("\\t(")
+                    ? block
+                    : stripTags(block, dropSize, dropFont);
+
+            if (kept.length() > 0) out.append('{').append(kept).append('}');
+            i = end + 1;
+        }
+
+        return out.toString();
+    }
+
+    /** Drops \fs&lt;number&gt; and \fn&lt;name&gt; from one override block. */
+    private static String stripTags(String block, boolean dropSize, boolean dropFont) {
+        StringBuilder out = new StringBuilder(block.length());
+        int i = 0;
+
+        while (i < block.length()) {
+            if (block.charAt(i) != '\\') {
+                out.append(block.charAt(i));
+                i++;
+                continue;
+            }
+
+            // A tag runs to the next backslash, or to the end of the block.
+            int end = block.indexOf('\\', i + 1);
+            if (end < 0) end = block.length();
+
+            String tag = block.substring(i, end);
+            if ((dropSize && isFontSizeTag(tag)) || (dropFont && tag.startsWith("\\fn"))) {
+                i = end;
+                continue;
+            }
+
+            out.append(tag);
+            i = end;
+        }
+
+        return out.toString();
+    }
+
+    /**
+     * True for \fs28, false for \fsp (letter spacing) and \fscx / \fscy
+     * (scaling), which only share the prefix.
+     */
+    private static boolean isFontSizeTag(String tag) {
+        if (!tag.startsWith("\\fs") || tag.length() < 4) return false;
+        char next = tag.charAt(3);
+        return next >= '0' && next <= '9';
     }
 
     private static String scaleSize(String value) {
