@@ -1,3 +1,10 @@
+# [1.1.0-dev.1](https://github.com/hashtagbasit/aimal-patches/compare/v1.0.2...v1.1.0-dev.1) (2026-08-25)
+
+
+### Features
+
+* subtitle styling for HBO Max and Disney+ ([6514870](https://github.com/hashtagbasit/aimal-patches/commit/6514870e9b00cb5d0224fe621e0bfbf45452e0ca))
+
 ## [1.0.2](https://github.com/hashtagbasit/aimal-patches/compare/v1.0.1...v1.0.2) (2026-08-24)
 
 
