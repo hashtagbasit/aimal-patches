@@ -1,3 +1,10 @@
+# [1.1.0-dev.6](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.5...v1.1.0-dev.6) (2026-08-25)
+
+
+### Features
+
+* add Viki ad removal and HD unlock patches ([9e779e9](https://github.com/hashtagbasit/aimal-patches/commit/9e779e96f456a9d7bc4ffa4a79e8dba376cfe177))
+
 # [1.1.0-dev.5](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.4...v1.1.0-dev.5) (2026-08-25)
 
 

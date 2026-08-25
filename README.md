@@ -34,7 +34,7 @@ Desktop merge them for you.
 ## Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.1.0-dev.5](https://github.com/hashtagbasit/aimal-patches/releases/tag/v1.1.0-dev.5)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;6 patches total
+> **[v1.1.0-dev.6](https://github.com/hashtagbasit/aimal-patches/releases/tag/v1.1.0-dev.6)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;9 patches total
 <details open>
 <summary>📦 Crunchyroll&nbsp;&nbsp;•&nbsp;&nbsp;4 patches</summary>
 <br>
@@ -80,6 +80,23 @@ Desktop merge them for you.
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds a floating panel to change playback speed and stretch, crop or zoom the picture. |  |
+
+</details>
+
+<details open>
+<summary>📦 Viki&nbsp;&nbsp;•&nbsp;&nbsp;3 patches</summary>
+<br>
+
+**🎯 Supported versions:**
+
+| 26.5.0 |
+| :---: |
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds a floating panel to change playback speed and stretch, crop or zoom the picture. |  |
+| [Remove ads](#remove-ads) | Removes pre-roll and mid-roll video ads, and the display banners. |  |
+| [Unlock HD quality](#unlock-hd-quality) | Unlocks the High (1080p) video quality option. |  |
 
 </details>
 
