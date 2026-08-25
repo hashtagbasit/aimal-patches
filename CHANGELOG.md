@@ -1,3 +1,10 @@
+# [1.1.0-dev.4](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.3...v1.1.0-dev.4) (2026-08-25)
+
+
+### Bug Fixes
+
+* report whether the Crunchyroll subtitle hook is actually present ([74948b6](https://github.com/hashtagbasit/aimal-patches/commit/74948b6db66f8be9434580d6b6edae2971d51d05))
+
 # [1.1.0-dev.3](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.2...v1.1.0-dev.3) (2026-08-25)
 
 
