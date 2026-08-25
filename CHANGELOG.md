@@ -1,3 +1,10 @@
+# [1.1.0-dev.3](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.2...v1.1.0-dev.3) (2026-08-25)
+
+
+### Bug Fixes
+
+* make Crunchyroll subtitle settings actually take effect ([9f8683e](https://github.com/hashtagbasit/aimal-patches/commit/9f8683e9913b399e95c8980bc81233516ec538f5))
+
 # [1.1.0-dev.2](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.1...v1.1.0-dev.2) (2026-08-25)
 
 
