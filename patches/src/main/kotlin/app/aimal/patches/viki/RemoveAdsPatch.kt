@@ -37,7 +37,8 @@ import app.morphe.patcher.patch.bytecodePatch
  *
  * This does not touch DRM, licensing, or paid-content entitlement: rentals and
  * subscriber-only titles are unaffected. `Features.hd` is deliberately left
- * alone here - it is [unlockHdPatch]'s job.
+ * alone, because forcing it changes the quality label and nothing else - see
+ * the note in Fingerprints.kt.
  */
 @Suppress("unused")
 val removeAdsPatch = bytecodePatch(

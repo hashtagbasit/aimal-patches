@@ -58,19 +58,23 @@ internal object SessionManagerHasNoAdsFingerprint : Fingerprint(
     custom = { method, _ -> readsFeature(method, "noads") },
 )
 
-/**
- * `SessionManagerImpl.hasHdFeature()` - `Lu20/h0;->o()Z` in 26.5.0.
+/*
+ * There was a `SessionManagerHasHdFingerprint` here, forcing
+ * `SessionManagerImpl.hasHdFeature()` (`Lu20/h0;->o()Z`) true to unlock the
+ * "High" entry of the video-quality enum. It was removed in v1.1.0-dev.9,
+ * because it changed the label and nothing else.
  *
- * Gates whether the "High" entry of Viki's video-quality enum can be selected;
- * without it the player is pinned to "Standard". Same shape and same
- * uniqueness guarantee as [SessionManagerHasNoAdsFingerprint].
+ * The rendition ladder is built entirely server-side. The client has no say in
+ * it: `v5/playback_streams/{video_id}.json` takes no quality parameter, its
+ * `drms` argument is the constant "dt3" (`SupportedDrm` has a single entry), the
+ * stream is always `main[0]`, and the player factory sets no maximum height or
+ * bitrate on the track selector. Forcing the entitlement only convinces the app
+ * it is entitled - the server still builds the manifest from its own record of
+ * the account, so the picture stays SD.
+ *
+ * Do not add this back. The only remaining lever would be spoofing the device's
+ * Widevine security level, which is DRM circumvention and would fail anyway.
  */
-internal object SessionManagerHasHdFingerprint : Fingerprint(
-    returnType = "Z",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
-    parameters = listOf(),
-    custom = { method, _ -> readsFeature(method, "hd") },
-)
 
 /**
  * `VideoFragment.shouldShowAds()` - `Lcom/viki/android/video/j;->h0()Z` in 26.5.0.
