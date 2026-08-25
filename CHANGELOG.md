@@ -1,3 +1,10 @@
+# [1.1.0-dev.8](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.7...v1.1.0-dev.8) (2026-08-25)
+
+
+### Bug Fixes
+
+* add the missing Viki side-panel extension class ([e06d8d8](https://github.com/hashtagbasit/aimal-patches/commit/e06d8d878e9361ce040226b59d8e1820a94d109d))
+
 # [1.1.0-dev.7](https://github.com/hashtagbasit/aimal-patches/compare/v1.1.0-dev.6...v1.1.0-dev.7) (2026-08-25)
 
 
