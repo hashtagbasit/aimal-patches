@@ -30,7 +30,7 @@ object PlaybackSpeedConfigToStringFingerprint : Fingerprint(
  * exists, so this matches on them instead: three consecutive float literals
  * immediately followed by the `Float[]` construction. A scan of the whole app
  * found this to be the only constructor building such an array, and
- * [addFastSpeedsPatch] re-validates the array type before touching anything, so
+ * [playbackSpeedPatch] re-validates the array type before touching anything, so
  * a drifted match degrades to "the fast speeds are missing" rather than a crash.
  */
 object PlayerSettingsViewModelConstructorFingerprint : Fingerprint(
