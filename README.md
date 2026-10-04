@@ -1,5 +1,9 @@
 # Aimal Patches
 
+A dedicated subtitle editor with all 15 Noir style properties, live preview,
+and immediate playback updates. See the [subtitle guide](docs/subtitle-customization.md)
+and [Crunchyroll Android TV guide](docs/android-tv.md).
+
 A small bundle of [Morphe](https://morphe.software) patches for four streaming
 apps, all of it aimed at one thing: giving the player back the controls the app
 decided you did not need.
@@ -9,7 +13,8 @@ the comments panel that eats a third of the screen when you unfold a phone.
 
 | App | Package | Built against |
 | --- | --- | --- |
-| Crunchyroll | `com.crunchyroll.crunchyroid` | 3.117.0 |
+| Crunchyroll mobile | `com.crunchyroll.crunchyroid` | 3.117.0 |
+| Crunchyroll Android TV | `com.crunchyroll.crunchyroid` | 3.74.0 |
 | HBO Max | `com.wbd.stream` | 7.9.0.84 |
 | Disney+ | `com.disney.disneyplus` | 26.14.1+rc2-2026.08.20 |
 | Viki | `com.viki.android` | 26.5.0 |
@@ -18,7 +23,8 @@ Every fingerprint matches on structure or on names the apps cannot obfuscate,
 so newer builds are expected to work and are offered as experimental targets.
 
 `com.wbd.hbomax` is the Android TV build of HBO Max and is a different app.
-These patches target the phone and tablet builds.
+The HBO Max patches target the phone and tablet builds. Crunchyroll TV has a
+separate subtitle patch for 3.74.0; see the [TV guide](docs/android-tv.md).
 
 ### What this bundle does not do
 
@@ -51,9 +57,9 @@ merge them for you.
 ## Patches list
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.1.0](https://github.com/hashtagbasit/aimal-patches/releases/tag/v1.1.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;8 patches total
+> **[v1.3.2](https://github.com/hashtagbasit/aimal-patches/releases/tag/v1.3.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;9 patches total
 <details open>
-<summary>📦 Crunchyroll&nbsp;&nbsp;•&nbsp;&nbsp;3 patches</summary>
+<summary>📦 Crunchyroll&nbsp;&nbsp;•&nbsp;&nbsp;4 patches</summary>
 <br>
 
 **🎯 Supported versions:**
@@ -65,7 +71,8 @@ merge them for you.
 |----------|----------------|-----------|
 | [Aspect ratio control](#aspect-ratio-control) | Adds a Fit/Stretch toggle to the player. |  |
 | [Playback speed](#playback-speed) | Unhides the player's speed menu and fills it out to 0.5x-2.0x. |  |
-| [Subtitle styling](#subtitle-styling) | Adds subtitle size, font and outline controls to the player. |  |
+| [Subtitle styling](#subtitle-styling) | Adds all Noir subtitle style options, a live example and immediate updates during playback. |  |
+| [Subtitle styling (Android TV)](#subtitle-styling-android-tv) | All Noir subtitle options with live preview and hot reload. Hold OK or press Menu during playback to open the editor; includes Fit/Stretch. |  |
 
 </details>
 
@@ -80,7 +87,7 @@ merge them for you.
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds a floating panel to change playback speed and stretch, crop or zoom the picture. |  |
+| [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds playback controls and a full subtitle editor with live preview and instant styling. |  |
 
 </details>
 
@@ -95,7 +102,7 @@ merge them for you.
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds a floating panel to change playback speed and stretch, crop or zoom the picture. |  |
+| [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds playback controls and a full subtitle editor with live preview and instant styling. |  |
 
 </details>
 
@@ -110,7 +117,7 @@ merge them for you.
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds a floating panel to change playback speed and stretch, crop or zoom the picture. |  |
+| [Playback speed and aspect ratio](#playback-speed-and-aspect-ratio) | Adds playback controls and a full subtitle editor with live preview and instant styling. |  |
 | [Remove ads](#remove-ads) | Removes pre-roll and mid-roll video ads, and the display banners. |  |
 | [Use the whole screen for video](#use-the-whole-screen-for-video) | Hides the comments panel beside the player on tablets and unfolded foldables. |  |
 
@@ -125,17 +132,15 @@ merge them for you.
 this built and switched off. A playback-speed menu sits behind a feature flag
 with a table that stops at 1.0x, so one patch forces the flag true and widens
 the table. Aspect ratio and subtitles ride on a small chip row added to the
-player when it attaches to the window — deliberately self-contained, because
-tying it to the app's own show/hide callbacks broke on 3.117.0 when those
-stopped firing.
+player when it attaches to the window. The chips follow the visible toolbar,
+including ancestor visibility and alpha, and disappear completely when the
+controls hide.
 
-Crunchyroll's subtitles are the interesting one. They are rendered natively by
-libass straight into bitmaps, so by the time anything reaches a View there is no
-text left to restyle. The entire ASS script does pass through one method as a
-String on its way into the library, though, and ASS carries its styling as plain
-text — so the script is rewritten in flight and libass renders the result. The
-catch is that it only takes effect when a track loads, which is why the chips
-say so when you tap them.
+Crunchyroll keeps its native ASS scripts and libass handles intact. The subtitle
+patch captures the original script, follows the renderer's timestamp and draws
+basic text with the shared style renderer. A dedicated SUBTITLES dialog shows
+a live sample and redraws active subtitles immediately, including paused frames.
+Turning custom styling off restores the native ASS drawing.
 
 **HBO Max, Disney+ and Viki** share a single patch. All three play through
 androidx.media3, so instead of fingerprinting three different player UIs it
@@ -172,12 +177,15 @@ chain, so the player takes the full width. On a phone it is a no-op.
 
 ## Status
 
-Crunchyroll and HBO Max are tested on device. Viki is built and verified
-against 26.5.0 (versionCode 78800).
+The subtitle bundle builds in GitHub Actions. Android fixtures cover all 15
+style properties, persistence, paused updates, ASS timing, native fallback,
+font weights, controller visibility, and TV remote shortcuts. Instrumentation
+also checks the original Crunchyroll mobile 3.117.0 and TV 3.74.0 players.
 
-**Disney+ is written against a decompiled 26.14.1 but has not been run yet** —
-the hooks it needs were verified in the bytecode, not in the app. Reports
-welcome.
+The user confirmed authenticated TV playback and style changes on a Xiaomi Mi
+Box 4 running Android 9. Commercial HBO Max, Disney+, and Viki APKs have not
+been validated; those apps currently have shared media3 fixture coverage.
+See the [subtitle guide](docs/subtitle-customization.md) for limits and test commands.
 
 ## Building
 

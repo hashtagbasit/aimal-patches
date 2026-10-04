@@ -142,7 +142,7 @@ public final class Controls {
         AspectRatio.apply(video, Prefs.aspect());
         // Both apps reset the caption style when a new player or track is set
         // up, so the saved style is re-applied alongside the aspect mode.
-        Subtitles.apply(video.getRootView());
+
 
         video.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
@@ -204,3 +204,4 @@ public final class Controls {
         }
     }
 }
+
