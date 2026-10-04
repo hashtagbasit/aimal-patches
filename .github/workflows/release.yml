@@ -34,7 +34,7 @@ jobs:
       - name: Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew :patches:buildAndroid
+        run: python3 .github/scripts/build_bundle.py
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
