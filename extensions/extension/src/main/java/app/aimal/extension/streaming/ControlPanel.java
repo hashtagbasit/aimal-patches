@@ -331,5 +331,3 @@ final class ControlPanel extends LinearLayout {
                 TypedValue.COMPLEX_UNIT_DIP, value, getResources().getDisplayMetrics());
     }
 }
-
-

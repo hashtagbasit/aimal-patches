@@ -239,4 +239,3 @@ public final class AspectRatioHelper {
                 TypedValue.COMPLEX_UNIT_DIP, dp, ctx.getResources().getDisplayMetrics());
     }
 }
-
