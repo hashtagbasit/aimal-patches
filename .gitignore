@@ -121,6 +121,8 @@ gradle-app.setting
 
 # Dependency directories
 node_modules/
+__pycache__/
+*.pyc
 
 # gradle properties, due to Github token
 ./gradle.properties

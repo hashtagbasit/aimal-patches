@@ -70,9 +70,11 @@
     },
     {
       "name": "Playback speed and aspect ratio",
-      "description": "Adds a floating panel to change playback speed and stretch, crop or zoom the picture.",
+      "description": "Adds playback controls and a full subtitle editor with live preview and instant styling.",
       "default": true,
-      "dependencies": [],
+      "dependencies": [
+        "BytecodePatch"
+      ],
       "compatiblePackages": [
         {
           "packageName": "com.wbd.stream",
@@ -184,9 +186,11 @@
     },
     {
       "name": "Subtitle styling",
-      "description": "Adds subtitle size, font and outline controls to the player.",
+      "description": "Adds all Noir subtitle style options, a live example and immediate updates during playback.",
       "default": true,
-      "dependencies": [],
+      "dependencies": [
+        "BytecodePatch"
+      ],
       "compatiblePackages": [
         {
           "packageName": "com.crunchyroll.crunchyroid",
@@ -207,6 +211,34 @@
               "version": null,
               "versionCodes": null,
               "isExperimental": true,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Subtitle styling (Android TV)",
+      "description": "All Noir subtitle options with live preview and hot reload. Hold OK or press Menu during playback to open the editor; includes Fit/Stretch.",
+      "default": false,
+      "dependencies": [
+        "BytecodePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "com.crunchyroll.crunchyroid",
+          "name": "Crunchyroll (Android TV)",
+          "description": null,
+          "apkFileType": "APKM",
+          "appIconColor": "#F47521",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "3.74.0",
+              "versionCodes": null,
+              "isExperimental": false,
               "minSdk": null,
               "description": null
             }

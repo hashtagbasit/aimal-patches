@@ -1,0 +1,72 @@
+name: Subtitle validation
+on:
+  workflow_dispatch:
+  push:
+    branches: ['codex/subtitle-customization', 'codex/noir-subtitles-pr']
+  pull_request:
+    branches: ['dev']
+permissions:
+  contents: read
+  packages: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: burrunan/gradle-cache-action@v3
+      - name: Build bundle and patch list with bounded diagnostics
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 .github/scripts/build_bundle.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: subtitle-bundle
+          path: |
+            patches/build/libs/*.mpp
+            patches-list.json
+          if-no-files-found: error
+  fixtures:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/download-artifact@v4
+        with:
+          name: subtitle-bundle
+          path: bundle
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Install fixture build tools and Morphe Desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sdkmanager 'platforms;android-35' 'build-tools;35.0.1' 'ndk;27.0.12077973'
+          gh release download v1.18.0 -R MorpheApp/morphe-desktop --pattern '*-all.jar' --dir "$RUNNER_TEMP/aimal-tools"
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Execute patched fixtures on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          disable-animations: true
+          script: python3 tests/run_fixtures.py --sdk "$ANDROID_HOME" --bundle bundle/patches/build/libs --morphe "$RUNNER_TEMP/aimal-tools/morphe-desktop-1.18.0-all.jar" --out "$RUNNER_TEMP/aimal-fixtures" --fonts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: subtitle-fixture-results
+          path: |
+            ${{ runner.temp }}/aimal-fixtures/**/fixture-result.txt
+            ${{ runner.temp }}/aimal-fixtures/**/font-result.txt
+            ${{ runner.temp }}/aimal-fixtures/**/controls-result.txt
+            ${{ runner.temp }}/aimal-fixtures/**/tv-result.txt
+            ${{ runner.temp }}/aimal-fixtures/**/patch-result.json

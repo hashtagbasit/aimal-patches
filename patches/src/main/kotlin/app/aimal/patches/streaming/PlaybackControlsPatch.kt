@@ -2,6 +2,7 @@ package app.aimal.patches.streaming
 
 import app.aimal.patches.viki.VIKI
 import app.aimal.patches.viki.VikiApplicationFingerprint
+import app.aimal.patches.subtitles.media3SubtitlePatch
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
@@ -39,9 +40,10 @@ private const val PLAYER_BRIDGE = "$EXTENSION_STREAMING/PlayerBridge;"
 @Suppress("unused")
 val playbackControlsPatch = bytecodePatch(
     name = "Playback speed and aspect ratio",
-    description = "Adds a floating panel to change playback speed and stretch, crop or zoom the picture.",
+    description = "Adds playback controls and a full subtitle editor with live preview and instant styling.",
     default = true,
 ) {
+    dependsOn(media3SubtitlePatch)
     compatibleWith(HBO_MAX, DISNEY_PLUS, VIKI)
 
     extendWith("extensions/extension.mpe")
